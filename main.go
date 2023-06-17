@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -42,5 +43,7 @@ func main() {
 	r.SetupRoutes(app)
 
 	// Run server on port 8000
-	app.Listen(":8000")
+	host := os.Getenv("HOST")
+	port := os.Getenv("PORT")
+	app.Listen(host + ":" + port)
 }
