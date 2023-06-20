@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -43,7 +44,11 @@ func main() {
 	r.SetupRoutes(app)
 
 	// Run server on port 8000
+
 	host := os.Getenv("HOST")
 	port := os.Getenv("PORT")
+
+	fmt.Println("\nServer running on port", port)
+
 	app.Listen(host + ":" + port)
 }
