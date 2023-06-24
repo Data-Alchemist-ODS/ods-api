@@ -2,6 +2,9 @@ package main
 
 import (
 	"encoding/csv"
+	"encoding/json"
+
+	"io/ioutil"
 	"fmt"
 	"os"
 
@@ -14,8 +17,47 @@ type Data struct {
 	Attributes map[string]interface{}
 }
 
+func readJSON() [][]string {
+	f := "test.json"
+
+	content, err := ioutil.ReadFile(f)
+	if err != nil {
+		panic(err)
+	}
+
+	var jsonData []map[string]interface{}
+	err = json.Unmarshal(content, &jsonData)
+	if err != nil {
+		panic(err)
+	}
+
+	columns := make([]string, 0)
+	for key := range jsonData[0] {
+		columns = append(columns, key)
+	}
+
+	data := make([][]string, 0)
+	data = append(data, columns)
+
+	for _, item := range jsonData {
+		row := make([]string, 0)
+		for _, col := range columns {
+			value, ok := item[col].(string)
+			if !ok {
+				continue
+			}
+			row = append(row, value)
+		}
+
+		data = append(data, row)
+	}
+
+	return data
+
+}
+
 // Read data from CSV file
-func readData() [][]string {
+func readCSV() [][]string {
 	// Open the file
 	f, err := os.Open("test.csv")
 	if err != nil {
@@ -115,7 +157,9 @@ func performSharding(records [][]string, shardKey string, numShards int) {
 func main() {
 	var numofShard int
 	// Read data
-	records := readData()
+	records := readJSON()
+
+	fmt.Println(records)
 
 	// Take key
 	chooseCol := takeKey(records)
