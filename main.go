@@ -9,6 +9,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 	"gorm.io/gorm"
+
+	
 )
 
 type Repository struct {
@@ -35,7 +37,8 @@ func main() {
 	}
 
 	// Connect to database
-	r := Repository{DB: nil}
+	db := database.InitDB()
+	r := Repository{DB: db}
 
 	// Initialize Fiber
 	app := fiber.New()
