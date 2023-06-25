@@ -1,4 +1,4 @@
-module ods-backend
+module github.com/Data-Alchemist-ODS/ods-api
 
 go 1.18
 
