@@ -4,11 +4,12 @@ import (
 	"encoding/csv"
 	"encoding/json"
 
+	"path/filepath"
 	"io/ioutil"
 	"fmt"
 	"os"
 
-	"github.com/cespare/xxhash/v2" // Import package for XXHash algorithm
+	"github.com/cespare/xxhash/v2" 
 )
 
 // Data structure
@@ -17,8 +18,34 @@ type Data struct {
 	Attributes map[string]interface{}
 }
 
-func readJSON() [][]string {
-	f := "test.json"
+func check_file_format(filename string) string {
+	contentType := GetFileContentType(filename)
+
+	return contentType
+}
+
+func GetFileContentType (filename string) string {
+
+	extension := filepath.Ext(filename)
+
+	switch extension {
+	case ".csv":
+		return "text/csv"
+	case ".json":
+		return "application/json"
+	case ".xlsx":
+		return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	case ".pdf":
+		return "application/pdf"
+	case "":
+		return "file format not detected"
+	default:
+		return "application/octet-stream"
+	}
+}
+
+func readJSON(filename string) [][]string {
+	f := filename
 
 	content, err := ioutil.ReadFile(f)
 	if err != nil {
@@ -57,9 +84,9 @@ func readJSON() [][]string {
 }
 
 // Read data from CSV file
-func readCSV() [][]string {
+func readCSV(filename string) [][]string {
 	// Open the file
-	f, err := os.Open("test.csv")
+	f, err := os.Open(filename)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -155,18 +182,36 @@ func performSharding(records [][]string, shardKey string, numShards int) {
 
 // Main function
 func main() {
+
 	var numofShard int
-	// Read data
-	records := readJSON()
 
-	fmt.Println(records)
+	file := "test.json"
 
-	// Take key
-	chooseCol := takeKey(records)
+	checked_file := check_file_format(file)
 
-	fmt.Print("How much sharder:")
-	fmt.Scan(&numofShard)
-	numShard := numofShard
+	if checked_file == "text/csv" {
+		records := readCSV(file)
+		
+		chooseCol := takeKey(records)
 
-	performSharding(records, chooseCol, numShard)
+		fmt.Print("How much sharder:")
+		fmt.Scan(&numofShard)
+		numShard := numofShard
+
+		performSharding(records, chooseCol, numShard)
+
+	} else if checked_file == "application/json" {
+		records := readJSON(file)
+
+		chooseCol := takeKey(records)
+
+		fmt.Print("How much sharder:")
+		fmt.Scan(&numofShard)
+		numShard := numofShard
+
+		performSharding(records, chooseCol, numShard)
+
+	} else {
+		fmt.Println("File format not supported")
+	}
 }
