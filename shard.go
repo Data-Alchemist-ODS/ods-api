@@ -88,7 +88,7 @@ func readCSV(filename string) [][]string {
 	// Open the file
 	f, err := os.Open(filename)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
 
 	// Close the file
@@ -185,7 +185,7 @@ func main() {
 
 	var numofShard int
 
-	file := "test.json"
+	file := "test"
 
 	checked_file := check_file_format(file)
 
@@ -212,6 +212,6 @@ func main() {
 		performSharding(records, chooseCol, numShard)
 
 	} else {
-		fmt.Println("File format not supported")
+		fmt.Println("format file not supported!!!")
 	}
 }
