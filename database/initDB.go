@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func initDB () *mongo.Client {
+func InitDB() *mongo.Client {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("There's Problem Loading .env File")
@@ -42,6 +42,8 @@ func initDB () *mongo.Client {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	fmt.Println("Connection to Database is closed...")
+
+	return client
 }
