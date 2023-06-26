@@ -1,15 +1,15 @@
-package main
+package repositories
 
 import (
 	"encoding/csv"
 	"encoding/json"
-
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/cespare/xxhash/v2"
+	"github.com/gofiber/fiber/v2"
 )
 
 // Data structure
@@ -105,7 +105,7 @@ func readCSV(filename string) [][]string {
 }
 
 // Take shard key from the user
-func takeKey(records [][]string) string {
+func takeKey(records [][]string, shardCol string) string {
 	// Identified column on CSV data
 	if len(records) == 0 {
 		fmt.Println("No data")
@@ -118,16 +118,10 @@ func takeKey(records [][]string) string {
 		fmt.Println(col)
 	}
 
-	// Take the column name
-	var chooseCol string
-	fmt.Print("Select column to be your sharding key: ")
-	fmt.Scan(&chooseCol)
-	fmt.Println(chooseCol)
-
 	// See if input is correct
 	found := false
 	for _, col := range columns {
-		if col == chooseCol {
+		if col == shardCol {
 			found = true
 			break
 		}
@@ -137,7 +131,7 @@ func takeKey(records [][]string) string {
 		fmt.Println("Column not found")
 	} else {
 		fmt.Println(found)
-		return chooseCol
+		return shardCol
 	}
 
 	panic("Something Wrong")
@@ -180,38 +174,30 @@ func performSharding(records [][]string, shardKey string, numShards int) {
 	}
 }
 
-// Main function
-func main() {
-
-	var numofShard int
-
+func Shard(c *fiber.Ctx) error {
+	// TODO: get the body of our POST request
 	file := "test.csv"
+	numShard := 3
 
 	checked_file := check_file_format(file)
 
 	if checked_file == "text/csv" {
 		records := readCSV(file)
 
-		chooseCol := takeKey(records)
-
-		fmt.Print("How much sharder:")
-		fmt.Scan(&numofShard)
-		numShard := numofShard
+		chooseCol := takeKey(records, "Name")
 
 		performSharding(records, chooseCol, numShard)
 
 	} else if checked_file == "application/json" {
 		records := readJSON(file)
 
-		chooseCol := takeKey(records)
-
-		fmt.Print("How much sharder:")
-		fmt.Scan(&numofShard)
-		numShard := numofShard
+		chooseCol := takeKey(records, "Name")
 
 		performSharding(records, chooseCol, numShard)
 
 	} else {
 		fmt.Println("format file not supported!!!")
 	}
+
+	return c.SendString("Sharding Success")
 }

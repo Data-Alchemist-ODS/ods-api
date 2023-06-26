@@ -6,11 +6,10 @@ import (
 	// "net/http"
 	"os"
 
+	"github.com/Data-Alchemist-ODS/ods-api/repositories"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
-	// "gorm.io/gorm"
-
-	"github.com/Data-Alchemist-ODS/ods-api/database"
+	"gorm.io/gorm"	
 )
 
 // type Repository struct {
@@ -20,8 +19,8 @@ import (
 // func (r *Repository) SetupRoutes(app *fiber.App) {
 // 	api := app.Group("/api")
 
-// 	api.Get("", r.Index)
-// }
+	api.Get("", r.Index)
+}
 
 // func (r *Repository) Index(c *fiber.Ctx) error {
 // 	return c.Status(http.StatusOK).JSON(fiber.Map{
@@ -37,8 +36,8 @@ func main() {
 	}
 
 	// Connect to database
-	database.InitDB()
-	// r := Repository{DB: db}
+	db := database.InitDB()
+	r := Repository{DB: db}
 
 	// Initialize Fiber
 	app := fiber.New()
