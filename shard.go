@@ -185,7 +185,7 @@ func main() {
 
 	var numofShard int
 
-	file := "test"
+	file := "test.csv"
 
 	checked_file := check_file_format(file)
 
