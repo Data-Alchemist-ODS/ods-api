@@ -12,7 +12,7 @@ import (
 
 var mongoClient *mongo.Client
 
-func connectDB () error {
+func ConnectDB() error {
 	url := os.Getenv("DATABASE_URL")
 	if url == "" {
 		log.Fatal("Database URL is Empty")
@@ -35,11 +35,11 @@ func connectDB () error {
 	return nil
 }
 
-func disconnectDB () error {
+func DisconnectDB() error {
 	err := mongoClient.Disconnect(context.Background())
 	if err != nil {
 		log.Fatal(err)
-	}	
+	}
 
 	fmt.Println("Connection to Database is closed...")
 
