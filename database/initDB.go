@@ -5,28 +5,22 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func InitDB () *mongo.Client {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("There's Problem Loading .env File")
-	}
+var mongoClient *mongo.Client
 
-	DB_URL := os.Getenv("DATABASE_URL")
-	if DB_URL == "" {
+func connectDB () error {
+	url := os.Getenv("DATABASE_URL")
+	if url == "" {
 		log.Fatal("Database URL is Empty")
 	}
 
-	fmt.Println("My Database URL is:", DB_URL)
-
-	clientoption := options.Client().ApplyURI(DB_URL)
-
-	client, err := mongo.Connect(context.Background(), clientoption)
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(url))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,14 +30,37 @@ func InitDB () *mongo.Client {
 		log.Fatal(err)
 	}
 
+	mongoClient = client
+
 	fmt.Println("Successfully Connect To Database...")
 
-	// err = client.Disconnect(context.Background())
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	
-	// fmt.Println("Connection to Database is closed...")
+	return nil
+}
 
-	return client
+func disconnectDB () error {
+	err := mongoClient.Disconnect(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}	
+
+	fmt.Println("Connection to Database is closed...")
+
+	return nil
+}
+
+func main() {
+	// Read env
+	err := godotenv.Load("../.env")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Connect to database
+	connectDB()
+
+	//sleep time 5 second
+	time.Sleep(5 * time.Second)
+
+	// Disconnect to database
+	disconnectDB()
 }
