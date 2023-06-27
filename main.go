@@ -38,8 +38,10 @@ func main() {
 	}
 
 	// Connect to database
-	database.connectDB()
-	// r := Repository{DB: db}
+	err = database.ConnectDB()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Initialize Fiber
 	app := fiber.New()

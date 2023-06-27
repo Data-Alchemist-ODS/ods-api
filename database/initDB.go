@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
-	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -46,21 +44,4 @@ func disconnectDB () error {
 	fmt.Println("Connection to Database is closed...")
 
 	return nil
-}
-
-func main() {
-	// Read env
-	err := godotenv.Load("../.env")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Connect to database
-	connectDB()
-
-	//sleep time 5 second
-	time.Sleep(5 * time.Second)
-
-	// Disconnect to database
-	disconnectDB()
 }
