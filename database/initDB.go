@@ -11,11 +11,11 @@ import (
 )
 
 var mongoClient *mongo.Client
-var dbName string 
+
 
 func GetCollection(name string) *mongo.Collection {
-	col := mongoClient.Database(dbName).Collection(name)
-	fmt.Println(dbName)
+	col := mongoClient.Database("ODS").Collection(name)
+
 	fmt.Println("Successfully Get Collection...")
 	return col
 }
