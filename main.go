@@ -29,6 +29,7 @@ func main() {
 
 	//Get Collection
 	coll := database.GetCollection("transaction")
+	fmt.Println(coll)
 
 	// Initialize Fiber
 	app := fiber.New()

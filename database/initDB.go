@@ -15,6 +15,7 @@ var dbName string
 
 func GetCollection(name string) *mongo.Collection {
 	col := mongoClient.Database(dbName).Collection(name)
+	fmt.Println(dbName)
 	fmt.Println("Successfully Get Collection...")
 	return col
 }
