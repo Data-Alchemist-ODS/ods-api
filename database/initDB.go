@@ -12,10 +12,14 @@ import (
 
 var mongoClient *mongo.Client
 
-
 func GetCollection(name string) *mongo.Collection {
-	col := mongoClient.Database("ODS").Collection(name)
-
+	dbName, err := os.Getenv("DATABASE")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	col := mongoClient.Database(dbName).Collection(name)
+	fmt.Println(dbName)
 	fmt.Println("Successfully Get Collection...")
 	return col
 }
