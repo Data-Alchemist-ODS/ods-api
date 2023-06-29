@@ -13,11 +13,11 @@ import (
 var mongoClient *mongo.Client
 
 func GetCollection(name string) *mongo.Collection {
-	dbName, err := os.Getenv("DATABASE")
-	if err != nil {
-		log.Fatal(err)
+	dbName := os.Getenv("DATABASE")
+	if dbName == "" {
+		log.Fatal("Database Name Is Empty")
 	}
-	
+
 	col := mongoClient.Database(dbName).Collection(name)
 	fmt.Println(dbName)
 	fmt.Println("Successfully Get Collection...")
