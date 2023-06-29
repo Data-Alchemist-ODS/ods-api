@@ -6,29 +6,11 @@ import (
 	// "net/http"
 	"os"
 
-	// "github.com/Data-Alchemist-ODS/ods-api/repositories"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
-	// "gorm.io/gorm"	
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 )
-
-// type Repository struct {
-// 	DB *gorm.DB
-// }
-
-// func (r *Repository) SetupRoutes(app *fiber.App) {
-//	api := app.Group("/api")
-
-// 	api.Get("", r.Index)
-// }
-
-// func (r *Repository) Index(c *fiber.Ctx) error {
-// 	return c.Status(http.StatusOK).JSON(fiber.Map{
-// 		"message": "Hello, World 👋!",
-// 	})
-// }
 
 func main() {
 	// Read env
@@ -43,6 +25,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	defer database.DisconnectDB()
+
+	//Get Collection
+	coll := database.GetCollection("transaction")
+
 	// Initialize Fiber
 	app := fiber.New()
 
@@ -51,7 +38,7 @@ func main() {
 	})
 
 	// Routes
-	// r.SetupRoutes(app)
+
 
 	// Run server on port 8000
 
