@@ -8,17 +8,14 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/Data-Alchemist-ODS/ods-api/config"
 )
 
 var mongoClient *mongo.Client
 
 func ConnectDB() *mongo.Client {
-	url := os.Getenv("DATABASE_URL")
-	if url == "" {
-		log.Fatal("Database URL is Empty")
-	}
-
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(url))
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(config.LoadENV()))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,4 +41,10 @@ func DisconnectDB() error {
 	fmt.Println("Connection to Database is closed...")
 
 	return nil
+}
+
+func GetColletion(client *mongo.Client, name string) *mongo.Collection {
+	coll := client.Database("ODS").Collection(name)
+
+	return coll
 }
