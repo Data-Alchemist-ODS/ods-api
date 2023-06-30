@@ -28,7 +28,7 @@ func main() {
 	defer database.DisconnectDB()
 
 	//Get Collection
-	coll := database.GetCollection("transaction")
+	coll := database.GetCollection("Transaction")
 	fmt.Println(coll)
 
 	// Initialize Fiber

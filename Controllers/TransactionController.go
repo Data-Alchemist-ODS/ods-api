@@ -14,5 +14,5 @@ import (
 )
 
 func GetALLTranscation (c *fiber.Ctx) error {
-	coll := database.GetCollection()
+	coll := database.GetCollection("")
 }
