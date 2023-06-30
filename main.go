@@ -40,7 +40,7 @@ func main() {
 	})
 
 	// Routes
-
+	Routes.RouteInit(app)
 
 	// Run server on port 8000
 

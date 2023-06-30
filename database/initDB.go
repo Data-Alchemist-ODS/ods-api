@@ -8,8 +8,10 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"gorm.io/gorm"
 )
 
+var DB *gorm.DB
 var mongoClient *mongo.Client
 
 func GetCollection(name string) *mongo.Collection {
@@ -19,7 +21,7 @@ func GetCollection(name string) *mongo.Collection {
 	}
 
 	col := mongoClient.Database(dbName).Collection(name)
-	
+
 	fmt.Println("Successfully Get Collection:", col.Name())
 	return col
 }
