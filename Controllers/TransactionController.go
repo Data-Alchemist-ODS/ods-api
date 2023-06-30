@@ -1,16 +1,6 @@
 package Controllers
 
 import (
-	// "encoding/csv"
-	// "encoding/json"
-
-	// "fmt"
-	// "io/ioutil"
-	// "os"
-	// "path/filepath"
-	// "time"
-
-	// "github.com/cespare/xxhash/v2"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"

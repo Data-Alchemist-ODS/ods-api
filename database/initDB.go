@@ -11,22 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
-var mongoClient *mongo.Client
-
-func GetCollection(name string) *mongo.Collection {
-	dbName := os.Getenv("DATABASE")
-	if dbName == "" {
-		log.Fatal("Database Name Is Empty")
-	}
-
-	col := mongoClient.Database(dbName).Collection(name)
-
-	fmt.Println("Successfully Get Collection:", col.Name())
-	return col
-}
-
-func ConnectDB() error {
+func ConnectDB() *mongo.Client {
 	url := os.Getenv("DATABASE_URL")
 	if url == "" {
 		log.Fatal("Database URL is Empty")
@@ -46,16 +31,27 @@ func ConnectDB() error {
 
 	fmt.Println("Successfully Connect To Database...")
 
-	return nil
+	return client
 }
 
-func DisconnectDB() error {
-	err := mongoClient.Disconnect(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
+// func DisconnectDB() error {
+// 	err := mongoClient.Disconnect(context.Background())
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
 
-	fmt.Println("Connection to Database is closed...")
+// 	fmt.Println("Connection to Database is closed...")
 
-	return nil
+// 	return nil
+// }
+
+//client instance
+
+var mongoClient *mongo.Client = ConnectDB()
+
+func GetCollection (client *mongo.Client, name string) *mongo.Collection {
+	coll := client.Database("ODS").Collection(name)
+	
+	return coll
 }
+
