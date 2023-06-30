@@ -10,10 +10,10 @@ import (
 type Transaction struct {
 	gorm.Model
 
-	ID primitive.ObjectID `gorm:"primaryKey"`
-	PartitionType string
-	ShardingKey string
-	Database string
-	Date time.Time
+	ID primitive.ObjectID `gorm:"primaryKey"` 
+	PartitionType string `json:"partition_type"`
+	ShardingKey string `json:"sharding_key"`
+	Database string `json:"database"`
+	Date time.Time  `json:"Datec"`
 }
 	
