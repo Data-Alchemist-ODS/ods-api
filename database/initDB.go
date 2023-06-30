@@ -10,6 +10,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var mongoClient *mongo.Client
+
 func ConnectDB() *mongo.Client {
 	url := os.Getenv("DATABASE_URL")
 	if url == "" {
@@ -26,31 +28,20 @@ func ConnectDB() *mongo.Client {
 		log.Fatal(err)
 	}
 
-	mongoClient = client
-
 	fmt.Println("Successfully Connect To Database...")
+
+	mongoClient = client // Assign the client to the global variable
 
 	return client
 }
 
-// func DisconnectDB() error {
-// 	err := mongoClient.Disconnect(context.Background())
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
+func DisconnectDB() error {
+	err := mongoClient.Disconnect(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// 	fmt.Println("Connection to Database is closed...")
+	fmt.Println("Connection to Database is closed...")
 
-// 	return nil
-// }
-
-//client instance
-
-var mongoClient *mongo.Client = ConnectDB()
-
-func GetCollection (client *mongo.Client, name string) *mongo.Collection {
-	coll := client.Database("ODS").Collection(name)
-	
-	return coll
+	return nil
 }
-
