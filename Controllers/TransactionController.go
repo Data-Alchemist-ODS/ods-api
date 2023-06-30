@@ -13,6 +13,6 @@ import (
 	"github.com/cespare/xxhash/v2"
 )
 
-func GetALLTranscation (c *fiber.Ctx) error {
-	coll := database.GetCollection("")
+func GetALLTranscation (ctx *fiber.Ctx) error {
+	var transaction []
 }
