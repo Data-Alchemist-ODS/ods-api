@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"
+	"github.com/Data-Alchemist-ODS/ods-api/Routes"
 )
 
 func main() {
