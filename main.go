@@ -22,6 +22,7 @@ func main() {
 
 	// Connect to database
 	err = database.ConnectDB()
+	fmt.Println(err)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,10 +31,6 @@ func main() {
 
 	// Initialize Fiber
 	app := fiber.New()
-
-	app.Get("/:name", func(ctx *fiber.Ctx) error{
-		return ctx.SendString("Hello, " + ctx.Params("name") + "!")
-	})
 
 	// Routes
 	Routes.RouteInit(app)
