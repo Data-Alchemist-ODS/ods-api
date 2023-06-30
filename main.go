@@ -10,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"
-	"github.com/Data-Alchemist-ODS/ods-api/Routes"
+	// "github.com/Data-Alchemist-ODS/ods-api/Routes"
 )
 
 func main() {
@@ -21,11 +21,7 @@ func main() {
 	}
 
 	// Connect to database
-	err = database.ConnectDB()
-	fmt.Println(err)
-	if err != nil {
-		log.Fatal(err)
-	}
+	database.ConnectDB()
 
 	defer database.DisconnectDB()
 
@@ -33,7 +29,7 @@ func main() {
 	app := fiber.New()
 
 	// Routes
-	Routes.RouteInit(app)
+	// Routes.RouteInit(app)
 
 	// Run server on port 8000
 

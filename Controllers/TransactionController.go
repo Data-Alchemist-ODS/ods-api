@@ -7,7 +7,7 @@ import (
 	"github.com/Data-Alchemist-ODS/ods-api/Models/Entity"
 )
 
-func GetALLTranscation (ctx *fiber.Ctx) error {
+func GetALLTranscation (c *fiber.Ctx) error {
 	var transaction []Entity.Transaction
 
 	err := database.DB.Debug().Find(&transaction).Error
