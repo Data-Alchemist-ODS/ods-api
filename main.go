@@ -1,16 +1,16 @@
+// main.go
+
 package main
 
 import (
 	"fmt"
 	"log"
-	// "net/http"
 	"os"
 
+	"github.com/Data-Alchemist-ODS/ods-api/database"
+	"github.com/Data-Alchemist-ODS/ods-api/Routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
-
-	"github.com/Data-Alchemist-ODS/ods-api/database"
-	// "github.com/Data-Alchemist-ODS/ods-api/Routes"
 )
 
 func main() {
@@ -29,14 +29,15 @@ func main() {
 	app := fiber.New()
 
 	// Routes
-	// Routes.RouteInit(app)
+	Routes.RouteInit(app)
 
-	// Run server on port 8000
-
+	// Run server on specified host and port
 	host := os.Getenv("HOST")
 	port := os.Getenv("PORT")
+	fmt.Println("\nServer running on", host+":"+port)
 
-	fmt.Println("\nServer running on port", port)
-
-	app.Listen(host + ":" + port)
+	err = app.Listen(host + ":" + port)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
