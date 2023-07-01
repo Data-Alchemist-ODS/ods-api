@@ -57,7 +57,6 @@ func CreateTransaction(c *fiber.Ctx, db *gorm.DB) error {
 		UpdatedAt: time.Now(),
 	}
 
-	db := database.GetDB()
 	result := db.Create(&transaction)
 
 	if result.Error != nil {
