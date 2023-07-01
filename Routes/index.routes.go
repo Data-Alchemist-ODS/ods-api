@@ -7,5 +7,5 @@ import (
 )
 
 func RouteInit (r *fiber.App) {
-	r.Get("/transaction", Controllers.GetOneTranscation)
+	r.Get("/transaction", Controllers.GetALLTranscation)
 }

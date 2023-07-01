@@ -47,3 +47,7 @@ func GetColletion(client *mongo.Client, name string) *mongo.Collection {
 
 	return coll
 }
+
+func GetDB () *mongo.Client {
+	return mongoClient
+}
