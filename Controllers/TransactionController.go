@@ -5,6 +5,7 @@ import (
 	"context"
 	"github.com/gofiber/fiber/v2"
 
+	"gorm.io/gorm"
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/Models/Entity"
 	"github.com/Data-Alchemist-ODS/ods-api/Models/Request"
@@ -39,7 +40,7 @@ func GetAllTransactions(c *fiber.Ctx) error {
 	return c.JSON(transactions)
 }
 
-func CreateTransaction(c *fiber.Ctx) error {
+func CreateTransaction(c *fiber.Ctx, db *gorm.DB) error {
 	var request Request.TransactionCreateRequest
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
