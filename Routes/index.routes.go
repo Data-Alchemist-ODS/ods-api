@@ -1,5 +1,3 @@
-// index.routes.go
-
 package Routes
 
 import (

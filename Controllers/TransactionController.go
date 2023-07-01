@@ -40,31 +40,34 @@ func GetAllTransactions(c *fiber.Ctx) error {
 	return c.JSON(transactions)
 }
 
-func CreateTransaction(c *fiber.Ctx, db *gorm.DB) error {
-	var request Request.TransactionCreateRequest
-	if err := c.BodyParser(&request); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message":"invalid request body",
-			"error": err.Error(),
-		})
-	}
+func CreateTransaction(c *fiber.Ctx) error {
+    db := database.ConnectDB()
+    defer db.Disconnect(context.Background())
 
-	transaction:= Entity.Transaction {
-		PartitionType: request.PartitionType,
-		ShardingKey: request.ShardingKey,
-		Database: request.Database,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
+    var request Request.TransactionCreateRequest
+    if err := c.BodyParser(&request); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "message": "invalid request body",
+            "error":   err.Error(),
+        })
+    }
 
-	result := db.Create(&transaction)
+    transaction := Entity.Transaction{
+        PartitionType: request.PartitionType,
+        ShardingKey:   request.ShardingKey,
+        Database:      request.Database,
+        CreatedAt:     time.Now(),
+        UpdatedAt:     time.Now(),
+    }
 
-	if result.Error != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message":"failed to create transaction",
-			"error": result.Error.Error(),
-		})
-	}
+    collection := database.GetCollection(db, "Transaction")
+    _, err := collection.InsertOne(context.Background(), transaction)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "message": "failed to create transaction",
+            "error":   err.Error(),
+        })
+    }
 
-	return c.JSON(transaction)
+    return c.JSON(transaction)
 }
