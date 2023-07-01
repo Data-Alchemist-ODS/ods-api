@@ -42,12 +42,12 @@ func DisconnectDB() error {
 	return nil
 }
 
-func GetColletion(client *mongo.Client, name string) *mongo.Collection {
+func GetCollection(client *mongo.Client, name string) *mongo.Collection { // Mengubah nama fungsi menjadi GetCollection
 	coll := client.Database("ODS").Collection(name)
 
 	return coll
 }
 
-func GetDB () *mongo.Client {
+func GetDB() *mongo.Client {
 	return mongoClient
 }
