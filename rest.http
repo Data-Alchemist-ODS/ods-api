@@ -1,0 +1,14 @@
+//Transactinon Section
+//Get All Transaction
+GET http://127.0.0.1:8000/transaction
+
+//Create Transaction
+POST http://127.0.0.1:8000/
+Content-Type: application/json
+
+{
+  "file_data": "test_file/test.csv",
+  "partition_type": "Horizontal",
+  "sharding_key": "Age",
+  "database": "MongoDB"
+}

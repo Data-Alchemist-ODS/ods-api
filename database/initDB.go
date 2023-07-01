@@ -26,6 +26,8 @@ func ConnectDB() *mongo.Client {
 
 	fmt.Println("Successfully Connect To Database...")
 
+	//if http request then print get data
+
 	mongoClient = client // Assign the client to the global variable
 
 	return client

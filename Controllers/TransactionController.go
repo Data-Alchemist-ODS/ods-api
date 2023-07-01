@@ -1,6 +1,7 @@
 package Controllers
 
 import (
+	"time"
 	"context"
 	"github.com/gofiber/fiber/v2"
 
@@ -35,4 +36,34 @@ func GetAllTransactions(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(transactions)
+}
+
+func CreateTransaction(c *fiber.Ctx) error {
+	var request Request.TransactionCreateRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message":"invalid request body",
+			"error": err.Error(),
+		})
+	}
+
+	transaction:= Entity.Transaction {
+		PartitionType: request.PartitionType,
+		ShardingKey: request.ShardingKey,
+		Database: request.Database,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	db := database.GetDB()
+	result := db.Create(&transaction)
+
+	if result.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message":"failed to create transaction",
+			"error": result.Error.Error(),
+		})
+	}
+
+	return c.JSON(transaction)
 }

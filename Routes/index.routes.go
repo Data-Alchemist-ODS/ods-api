@@ -8,5 +8,6 @@ import (
 )
 
 func RouteInit(r *fiber.App) {
+	r.Post("/", Controllers.CreateTransaction)
 	r.Get("/transaction", Controllers.GetAllTransactions)
 }
