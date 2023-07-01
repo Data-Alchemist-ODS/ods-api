@@ -7,6 +7,7 @@ import (
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/Models/Entity"
+	"github.com/Data-Alchemist-ODS/ods-api/Models/Request"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
