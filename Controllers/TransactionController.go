@@ -1,14 +1,12 @@
 package Controllers
 
 import (
-	"time"
+	"context"
 	"github.com/gofiber/fiber/v2"
-	"net/http"
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/Models/Entity"
-
-	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // func GetOneTranscation (c *fiber.Ctx) error {
@@ -33,17 +31,28 @@ import (
 // 		Message : "success",
 // 		Data: &fiber.Map{"data": transaction}
 // 	})
-// }
+// 
 
-func GetAllTransaction (c *fiber.Ctx) error {
-	//database
-	db := database.GetDB()
+func GetAllTransactions(c *fiber.Ctx) error {
+	db := database.ConnectDB() // Mengambil koneksi database dari package database
+	defer db.Disconnect(context.Background())
+
+	collection := database.GetCollection(db, "Transaction") // Mendapatkan objek koleksi "Transaction"
 
 	var transactions []Entity.Transaction
-	if err := db.Find(&transactions).Error; err != nil {
+	cursor, err := collection.Find(context.Background(), options.Find())
+
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message":"failed to get any transaction",
-			"error":err.Error(),
+			"message": "Failed to get transactions",
+			"error":   err.Error(),
+		})
+	}
+
+	if err := cursor.All(context.Background(), &transactions); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to decode transactions",
+			"error":   err.Error(),
 		})
 	}
 
