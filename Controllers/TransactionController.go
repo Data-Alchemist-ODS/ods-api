@@ -46,10 +46,20 @@ func CreateTransaction(c *fiber.Ctx) error {
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
 
-	var request request.TransactionCreateRequest
+	var request Request.TransactionCreateRequest
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid request body",
+			"error":   err.Error(),
+		})
+	}
+
+	fileContentType := repositories.GetFileContentType(request.FileName)
+
+	records, err := repositories.ReadData(request.FileData, fileContentType)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to read data",
 			"error":   err.Error(),
 		})
 	}
@@ -60,37 +70,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 		Database:      request.Database,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
-	}
-
-	var records [][]string
-	var err error
-
-	if request.FileData != "" {
-		fileExt := filepath.Ext(request.FileData)
-		switch fileExt {
-		case ".csv":
-			records, err = repositories.ReadCSV(request.FileData)
-			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"message": "failed to read csv file",
-					"error":   err.Error(),
-				})
-			}
-		case ".json":
-			records, err = repositories.ReadJSON(request.FileData)
-			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"message": "failed to read json file",
-					"error":   err.Error(),
-				})
-			}
-		default:
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "unsupported file format",
-			})
-		}
-
-		transaction.Data = records
+		Data:          records,
 	}
 
 	collection := database.GetCollection(db, "Transaction")
