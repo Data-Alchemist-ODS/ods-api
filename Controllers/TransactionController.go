@@ -57,6 +57,12 @@ func CreateTransaction(c *fiber.Ctx) error {
 	var err error
 	if request.FileContentType == "text/csv" {
 		records, err = repositories.ReadCSV(string(request.FileData))
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "failed to read csv file",
+				"error":   err.Error(),
+			})
+		}
 	} else if request.FileContentType == "application/json" {
 		records, err = repositories.ReadJSON(string(request.FileData))
 		if err != nil {
