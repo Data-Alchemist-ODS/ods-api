@@ -6,6 +6,6 @@ import (
 )
 
 func RouteInit(r *fiber.App) {
-	r.Post("/", Controllers.CreateTransaction)
-	r.Get("/transaction", Controllers.GetAllTransactions)
+	r.Post("/v1/api", Controllers.CreateTransaction)
+	r.Get("/v1/api/transaction", Controllers.GetAllTransactions)
 }

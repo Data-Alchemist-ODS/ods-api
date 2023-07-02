@@ -31,6 +31,11 @@ func main() {
 	// Routes
 	Routes.RouteInit(app)
 
+	//handle unavailavble route
+	app.Use(func(c *fiber.Ctx) error {
+		return c.SendStatus(404) // => 404 "Not Found"
+	})
+
 	// Run server on specified host and port
 	host := os.Getenv("HOST")
 	port := os.Getenv("PORT")

@@ -5,7 +5,6 @@ import (
 	"context"
 	"github.com/gofiber/fiber/v2"
 
-	"gorm.io/gorm"
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/Models/Entity"
 	"github.com/Data-Alchemist-ODS/ods-api/Models/Request"
@@ -52,12 +51,34 @@ func CreateTransaction(c *fiber.Ctx) error {
         })
     }
 
+	var records [][]string
+	var err error
+	if request.FileContentType == "text/csv" {
+		records, err = repositories.ReadCSV(request.FileData)
+	} else if request.FileContentType == "application/json" {
+		jsonData, err := repositories.ReadJSON(request.FileData)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "failed to read json file",
+				"error":   err.Error(),
+			})
+		}
+
+		records = repositories.ConvertJSONToCSV(jsonData)
+	} else {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid file format",
+			"error":   err.Error(),
+		})
+	}
+
     transaction := Entity.Transaction{
         PartitionType: request.PartitionType,
         ShardingKey:   request.ShardingKey,
         Database:      request.Database,
         CreatedAt:     time.Now(),
         UpdatedAt:     time.Now(),
+		Data: record,
     }
 
     collection := database.GetCollection(db, "Transaction")
@@ -69,5 +90,7 @@ func CreateTransaction(c *fiber.Ctx) error {
         })
     }
 
-    return c.JSON(transaction)
+    return c.JSON(fiber.Map{
+		"transaction": transaction,
+		"message": "transaction created successfully"})
 }
