@@ -1,15 +1,16 @@
 package Controllers
 
 import (
-	"time"
 	"context"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/Models/Entity"
-	"github.com/Data-Alchemist-ODS/ods-api/Models/Request"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	request "github.com/Data-Alchemist-ODS/ods-api/Models/Request"
 	"github.com/Data-Alchemist-ODS/ods-api/repositories"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func GetAllTransactions(c *fiber.Ctx) error {
@@ -44,7 +45,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
 
-	var request Request.TransactionCreateRequest
+	var request request.TransactionCreateRequest
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid request body",
@@ -52,10 +53,10 @@ func CreateTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-	var record [][]string
+	var records [][]string
 	var err error
 	if request.FileContentType == "text/csv" {
-		record, err = repositories.ReadCSV(request.FileData)
+		records, err = repositories.ReadCSV(request.FileData)
 	} else if request.FileContentType == "application/json" {
 		jsonData, err := repositories.ReadJSON(request.FileData)
 		if err != nil {
@@ -65,11 +66,10 @@ func CreateTransaction(c *fiber.Ctx) error {
 			})
 		}
 
-		record = jsonData
+		records = jsonData
 	} else {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid file format",
-			"error":   err.Error(),
 		})
 	}
 
@@ -79,7 +79,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 		Database:      request.Database,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
-		Data:          record,
+		Data:          records,
 	}
 
 	collection := database.GetCollection(db, "Transaction")
