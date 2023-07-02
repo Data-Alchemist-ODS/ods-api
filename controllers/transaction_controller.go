@@ -1,15 +1,14 @@
-package Controllers
+package controllers
 
 import (
 	"context"
 	"time"
-	"path/filepath"
 
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"
-	"github.com/Data-Alchemist-ODS/ods-api/Models/Entity"
-	request "github.com/Data-Alchemist-ODS/ods-api/Models/Request"
+	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
+	"github.com/Data-Alchemist-ODS/ods-api/models/request"
 	"github.com/Data-Alchemist-ODS/ods-api/repositories"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -22,7 +21,7 @@ func GetAllTransactions(c *fiber.Ctx) error {
 
 	collection := database.GetCollection(client, "Transaction") // Mendapatkan objek koleksi "Transaction"
 
-	var transactions []Entity.Transaction
+	var transactions []entity.Transaction
 	cursor, err := collection.Find(context.Background(), options.Find())
 
 	if err != nil {
@@ -46,7 +45,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
 
-	var request Request.TransactionCreateRequest
+	var request request.TransactionCreateRequest
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid request body",
@@ -64,7 +63,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-	transaction := Entity.Transaction{
+	transaction := entity.Transaction{
 		PartitionType: request.PartitionType,
 		ShardingKey:   request.ShardingKey,
 		Database:      request.Database,

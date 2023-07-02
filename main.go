@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"
-	"github.com/Data-Alchemist-ODS/ods-api/Routes"
+	"github.com/Data-Alchemist-ODS/ods-api/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 )
@@ -29,7 +29,7 @@ func main() {
 	app := fiber.New()
 
 	// Routes
-	Routes.RouteInit(app)
+	routes.RouteInit(app)
 
 	//handle unavailavble route
 	app.Use(func(c *fiber.Ctx) error {

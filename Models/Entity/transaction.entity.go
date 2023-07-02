@@ -1,10 +1,10 @@
-package Entity
+package entity
 
 import (
 	"time"
 
-	"gorm.io/gorm"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"gorm.io/gorm"
 )
 
 type Transaction struct {
@@ -18,5 +18,3 @@ type Transaction struct {
 	UpdatedAt     time.Time          `json:"UpdatedAt"`
 	Data          [][]string         `json:"data"`
 }
-
-	
