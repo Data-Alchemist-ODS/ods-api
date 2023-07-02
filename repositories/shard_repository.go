@@ -182,14 +182,14 @@ func Shard(c *fiber.Ctx) error {
 	checked_file := check_file_format(file)
 
 	if checked_file == "text/csv" {
-		records := readCSV(file)
+		records := ReadCSV(file)
 
 		chooseCol := takeKey(records, "Name")
 
 		performSharding(records, chooseCol, numShard)
 
 	} else if checked_file == "application/json" {
-		records := readJSON(file)
+		records := ReadJSON(file)
 
 		chooseCol := takeKey(records, "Name")
 
