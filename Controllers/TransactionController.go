@@ -60,7 +60,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "failed to read csv file",
-				"error":   err.Error(),
+				"error": err.Error(),
 			})
 		}
 	} else if request.FileContentType == "application/json" {
@@ -68,7 +68,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "failed to read json file",
-				"error":   err.Error(),
+				"error": err.Error(),
 			})
 		}
 	} else {
@@ -91,12 +91,12 @@ func CreateTransaction(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to create transaction",
-			"error":   err.Error(),
+			"error": err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
 		"transaction": transaction,
-		"message":     "transaction created successfully",
+		"message": "transaction created successfully",
 	})
 }
