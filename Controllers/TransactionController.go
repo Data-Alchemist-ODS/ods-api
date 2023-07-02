@@ -41,21 +41,21 @@ func GetAllTransactions(c *fiber.Ctx) error {
 }
 
 func CreateTransaction(c *fiber.Ctx) error {
-    db := database.ConnectDB()
-    defer db.Disconnect(context.Background())
+	db := database.ConnectDB()
+	defer db.Disconnect(context.Background())
 
-    var request Request.TransactionCreateRequest
-    if err := c.BodyParser(&request); err != nil {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "message": "invalid request body",
-            "error":   err.Error(),
-        })
-    }
+	var request Request.TransactionCreateRequest
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid request body",
+			"error":   err.Error(),
+		})
+	}
 
-	var records [][]string
+	var record [][]string
 	var err error
 	if request.FileContentType == "text/csv" {
-		records, err = repositories.ReadCSV(request.FileData)
+		record, err = repositories.ReadCSV(request.FileData)
 	} else if request.FileContentType == "application/json" {
 		jsonData, err := repositories.ReadJSON(request.FileData)
 		if err != nil {
@@ -65,7 +65,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 			})
 		}
 
-		records = jsonData
+		record = jsonData
 	} else {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid file format",
@@ -73,25 +73,26 @@ func CreateTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-    transaction := Entity.Transaction{
-        PartitionType: request.PartitionType,
-        ShardingKey:   request.ShardingKey,
-        Database:      request.Database,
-        CreatedAt:     time.Now(),
-        UpdatedAt:     time.Now(),
-		Data: record,
-    }
+	transaction := Entity.Transaction{
+		PartitionType: request.PartitionType,
+		ShardingKey:   request.ShardingKey,
+		Database:      request.Database,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+		Data:          record,
+	}
 
-    collection := database.GetCollection(db, "Transaction")
-    _, err := collection.InsertOne(context.Background(), transaction)
-    if err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "message": "failed to create transaction",
-            "error":   err.Error(),
-        })
-    }
+	collection := database.GetCollection(db, "Transaction")
+	_, err = collection.InsertOne(context.Background(), transaction)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to create transaction",
+			"error":   err.Error(),
+		})
+	}
 
-    return c.JSON(fiber.Map{
+	return c.JSON(fiber.Map{
 		"transaction": transaction,
-		"message": "transaction created successfully"})
+		"message":     "transaction created successfully",
+	})
 }
