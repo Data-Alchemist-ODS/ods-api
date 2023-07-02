@@ -44,7 +44,7 @@ func GetFileContentType(filename string) string {
 	}
 }
 
-func readJSON(filename string) [][]string {
+func ReadJSON(filename string) [][]string {
 	f := filename
 
 	content, err := ioutil.ReadFile(f)
@@ -84,7 +84,7 @@ func readJSON(filename string) [][]string {
 }
 
 // Read data from CSV file
-func readCSV(filename string) [][]string {
+func ReadCSV(filename string) [][]string {
 	// Open the file
 	f, err := os.Open(filename)
 	if err != nil {

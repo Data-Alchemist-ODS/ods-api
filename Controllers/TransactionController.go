@@ -9,6 +9,7 @@ import (
 	"github.com/Data-Alchemist-ODS/ods-api/Models/Entity"
 	"github.com/Data-Alchemist-ODS/ods-api/Models/Request"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/Data-Alchemist-ODS/ods-api/repositories"
 )
 
 func GetAllTransactions(c *fiber.Ctx) error {
@@ -64,7 +65,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 			})
 		}
 
-		records = repositories.ConvertJSONToCSV(jsonData)
+		records = jsonData
 	} else {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid file format",
