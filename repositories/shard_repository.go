@@ -25,7 +25,6 @@ func check_file_format(filename string) string {
 }
 
 func GetFileContentType(filename string) string {
-
 	extension := filepath.Ext(filename)
 
 	switch extension {
@@ -44,18 +43,18 @@ func GetFileContentType(filename string) string {
 	}
 }
 
-func ReadJSON(filename string) [][]string {
+func ReadJSON(filename string) ([][]string, error) {
 	f := filename
 
 	content, err := ioutil.ReadFile(f)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	var jsonData []map[string]interface{}
 	err = json.Unmarshal(content, &jsonData)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	columns := make([]string, 0)
@@ -79,16 +78,15 @@ func ReadJSON(filename string) [][]string {
 		data = append(data, row)
 	}
 
-	return data
-
+	return data, nil
 }
 
 // Read data from CSV file
-func ReadCSV(filename string) [][]string {
+func ReadCSV(filename string) ([][]string, error) {
 	// Open the file
 	f, err := os.Open(filename)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Close the file
@@ -98,10 +96,10 @@ func ReadCSV(filename string) [][]string {
 	r := csv.NewReader(f)
 	records, err := r.ReadAll()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return records
+	return records, nil
 }
 
 // Take shard key from the user
@@ -182,14 +180,20 @@ func Shard(c *fiber.Ctx) error {
 	checked_file := check_file_format(file)
 
 	if checked_file == "text/csv" {
-		records := ReadCSV(file)
+		records, err := ReadCSV(file)
+		if err != nil {
+			return err
+		}
 
 		chooseCol := takeKey(records, "Name")
 
 		performSharding(records, chooseCol, numShard)
 
 	} else if checked_file == "application/json" {
-		records := ReadJSON(file)
+		records, err := ReadJSON(file)
+		if err != nil {
+			return err
+		}
 
 		chooseCol := takeKey(records, "Name")
 
