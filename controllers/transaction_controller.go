@@ -2,12 +2,8 @@ package controllers
 
 import (
 	"context"
-	"crypto/tls"
-	"database/sql"
-	"fmt"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"
@@ -17,7 +13,25 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetAllTransactions(c *fiber.Ctx) error {
+// TransactionController is a contract what this controller can do
+type TransactionController interface {
+	GetAllTransactions(c *fiber.Ctx) error
+	CreateTransaction(c *fiber.Ctx) error
+}
+
+// transactionController is a struct that represent the TransactionController contract
+type transactionController struct{}
+
+// NewTransactionController is the constructor
+func NewTransactionController() TransactionController {
+	return &transactionController{}
+}
+
+/*
+ *  Implement functions goes down here
+ */
+
+func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error {
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
 
@@ -45,7 +59,7 @@ func GetAllTransactions(c *fiber.Ctx) error {
 	return c.JSON(transactions)
 }
 
-func CreateTransaction(c *fiber.Ctx) error {
+func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
 
@@ -88,38 +102,5 @@ func CreateTransaction(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"transaction": transaction,
 		"message":     "transaction created successfully",
-	})
-}
-
-func ConnectTiDB(c *fiber.Ctx) error {
-	// get from request body
-	serverName := c.FormValue("server_name")
-	user := c.FormValue("user")
-	password := c.FormValue("password")
-	database := c.FormValue("database")
-
-	mysql.RegisterTLSConfig("tidb", &tls.Config{
-		MinVersion: tls.VersionTLS12,
-		// ServerName: "gateway01.eu-central-1.prod.aws.tidbcloud.com",
-		ServerName: serverName,
-	})
-
-	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:4000)/%s?tls=tidb", user, password, serverName, database)
-	// db, err := sql.Open("mysql", "4MXeBRmXXzc7uqt.root:<your_password>@tcp(gateway01.eu-central-1.prod.aws.tidbcloud.com:4000)/test?tls=tidb")
-	db, err := sql.Open("mysql", dataSourceName)
-
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "failed to connect to TiDB",
-			"error":   err.Error(),
-		})
-	}
-
-	// TODO save to cache
-	// ...
-
-	return c.JSON(fiber.Map{
-		"message": "connected to TiDB",
-		"db":      db,
 	})
 }

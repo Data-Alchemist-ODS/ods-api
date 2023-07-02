@@ -6,6 +6,11 @@ import (
 )
 
 func RouteInit(r *fiber.App) {
-	r.Post("/v1/api", controllers.CreateTransaction)
-	r.Get("/v1/api/transaction", controllers.GetAllTransactions)
+	transactionController := controllers.NewTransactionController()
+	databaseController := controllers.NewDatabaseController()
+
+	r.Post("/v1/api", transactionController.CreateTransaction)
+	r.Get("/v1/api/transaction", transactionController.GetAllTransactions)
+
+	r.Post("/v1/api/connect/tidb", databaseController.ConnectToTiDB)
 }
