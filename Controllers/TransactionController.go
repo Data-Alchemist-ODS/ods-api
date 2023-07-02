@@ -3,6 +3,7 @@ package Controllers
 import (
 	"context"
 	"time"
+	"path/filepath"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -53,37 +54,43 @@ func CreateTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-	var records [][]string
-	var err error
-	if request.FileContentType == "text/csv" {
-		records, err = repositories.ReadCSV(string(request.FileData))
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "failed to read csv file",
-				"error": err.Error(),
-			})
-		}
-	} else if request.FileContentType == "application/json" {
-		records, err = repositories.ReadJSON(string(request.FileData))
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "failed to read json file",
-				"error": err.Error(),
-			})
-		}
-	} else {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "invalid file format",
-		})
-	}
-
 	transaction := Entity.Transaction{
 		PartitionType: request.PartitionType,
 		ShardingKey:   request.ShardingKey,
 		Database:      request.Database,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
-		Data:          records,
+	}
+
+	var records [][]string
+	var err error
+
+	if request.FileData != "" {
+		fileExt := filepath.Ext(request.FileData)
+		switch fileExt {
+		case ".csv":
+			records, err = repositories.ReadCSV(request.FileData)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "failed to read csv file",
+					"error":   err.Error(),
+				})
+			}
+		case ".json":
+			records, err = repositories.ReadJSON(request.FileData)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "failed to read json file",
+					"error":   err.Error(),
+				})
+			}
+		default:
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "unsupported file format",
+			})
+		}
+
+		transaction.Data = records
 	}
 
 	collection := database.GetCollection(db, "Transaction")
@@ -91,12 +98,12 @@ func CreateTransaction(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to create transaction",
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
 		"transaction": transaction,
-		"message": "transaction created successfully",
+		"message":     "transaction created successfully",
 	})
 }

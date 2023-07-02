@@ -7,8 +7,10 @@ POST http://127.0.0.1:8000/v1/api
 Content-Type: application/json
 
 {
-  "file_data": "test_file/test.csv",
-  "partition_type": "Horizontal",
+  "partition_type": "Type A",
   "sharding_key": "Age",
-  "database": "MongoDB"
+  "database": "MongoDB",
+  "file_content_type": "text/csv",
+  "file_data": "test.csv"
 }
+
