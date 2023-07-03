@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 	"path/filepath"
+	"mime/multipart"
+	"io/ioutil"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -43,28 +45,36 @@ func GetAllTransactions(c *fiber.Ctx) error {
 }
 
 func CreateTransaction(c *fiber.Ctx) error {
-	db := database.ConnectDB()
-	defer db.Disconnect(context.Background())
-
-	var request Request.TransactionCreateRequest
-	if err := c.BodyParser(&request); err != nil {
+	request := new(TransactionCreateRequest)
+	if err := c.BodyParser(request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid request body",
 			"error":   err.Error(),
 		})
 	}
 
-	fileContentType := repositories.GetFileContentType(request.FileName)
+	// Save file data to a temporary CSV file
+	filePath := "temp.csv"
+	if err := saveFileData(filePath, request.FileData); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to save file data",
+			"error":   err.Error(),
+		})
+	}
+	defer os.Remove(filePath) // Remove temporary file when done
 
-	records, err := repositories.ReadData(request.FileData, fileContentType)
+	// Read the CSV file
+	records, err := readCSV(filePath)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "failed to read data",
+			"message": "failed to read CSV file",
 			"error":   err.Error(),
 		})
 	}
 
+	// Create transaction object
 	transaction := Entity.Transaction{
+		ID:            primitive.NewObjectID(),
 		PartitionType: request.PartitionType,
 		ShardingKey:   request.ShardingKey,
 		Database:      request.Database,
@@ -73,17 +83,31 @@ func CreateTransaction(c *fiber.Ctx) error {
 		Data:          records,
 	}
 
-	collection := database.GetCollection(db, "Transaction")
-	_, err = collection.InsertOne(context.Background(), transaction)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "failed to create transaction",
-			"error":   err.Error(),
-		})
-	}
+	// Insert transaction to the database
+	// TODO: Insert transaction to your database here
 
 	return c.JSON(fiber.Map{
 		"transaction": transaction,
 		"message":     "transaction created successfully",
 	})
 }
+
+func CreateTransaction(c *fiber.Ctx) {
+	var request request.TransactionCreateRequest
+
+	if err := c.BodyParser(&request); err != nil {
+		c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid request body",
+			"error":   err.Error(),
+		})
+	}
+
+	transaction := Entity.Transaction {
+		PartitionType: request.PartitionType,
+		ShardingKey: request.ShardingKey,
+		Database: request.Database,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Data: request.Data,
+	}
+} 
