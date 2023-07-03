@@ -1,22 +1,37 @@
-package Controllers
+package controllers
 
 import (
 	"context"
 	"time"
-	"path/filepath"
-	"mime/multipart"
-	"io/ioutil"
 
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"
-	"github.com/Data-Alchemist-ODS/ods-api/Models/Entity"
-	request "github.com/Data-Alchemist-ODS/ods-api/Models/Request"
+	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
+	"github.com/Data-Alchemist-ODS/ods-api/models/request"
 	"github.com/Data-Alchemist-ODS/ods-api/repositories"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetAllTransactions(c *fiber.Ctx) error {
+// TransactionController is a contract what this controller can do
+type TransactionController interface {
+	GetAllTransactions(c *fiber.Ctx) error
+	CreateTransaction(c *fiber.Ctx) error
+}
+
+// transactionController is a struct that represent the TransactionController contract
+type transactionController struct{}
+
+// NewTransactionController is the constructor
+func NewTransactionController() TransactionController {
+	return &transactionController{}
+}
+
+/*
+ *  Implement functions goes down here
+ */
+
+func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error {
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
 
@@ -24,7 +39,7 @@ func GetAllTransactions(c *fiber.Ctx) error {
 
 	collection := database.GetCollection(client, "Transaction") // Mendapatkan objek koleksi "Transaction"
 
-	var transactions []Entity.Transaction
+	var transactions []entity.Transaction
 	cursor, err := collection.Find(context.Background(), options.Find())
 
 	if err != nil {
@@ -44,9 +59,12 @@ func GetAllTransactions(c *fiber.Ctx) error {
 	return c.JSON(transactions)
 }
 
-func CreateTransaction(c *fiber.Ctx) error {
-	request := new(TransactionCreateRequest)
-	if err := c.BodyParser(request); err != nil {
+func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
+	db := database.ConnectDB()
+	defer db.Disconnect(context.Background())
+
+	var request request.TransactionCreateRequest
+	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid request body",
 			"error":   err.Error(),
@@ -72,9 +90,7 @@ func CreateTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-	// Create transaction object
-	transaction := Entity.Transaction{
-		ID:            primitive.NewObjectID(),
+	transaction := entity.Transaction{
 		PartitionType: request.PartitionType,
 		ShardingKey:   request.ShardingKey,
 		Database:      request.Database,
@@ -91,23 +107,3 @@ func CreateTransaction(c *fiber.Ctx) error {
 		"message":     "transaction created successfully",
 	})
 }
-
-func CreateTransaction(c *fiber.Ctx) {
-	var request request.TransactionCreateRequest
-
-	if err := c.BodyParser(&request); err != nil {
-		c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "invalid request body",
-			"error":   err.Error(),
-		})
-	}
-
-	transaction := Entity.Transaction {
-		PartitionType: request.PartitionType,
-		ShardingKey: request.ShardingKey,
-		Database: request.Database,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Data: request.Data,
-	}
-} 
