@@ -81,7 +81,7 @@ func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error 
 
 	coll := database.GetCollection(database.GetDB(), "Transaction")
 
-	bd.AutoMigrate(&Person{})
+	db.AutoMigrate(&Person{})
 
 	file, err := os.Open(FileData)
 	if err != nil {
@@ -96,6 +96,8 @@ func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error 
 		return err
 	}
 
+	var documents []interface{}
+
 	for _, row := range data {
 		history := Person{
 			Fields: make(map[string]string),
@@ -108,6 +110,13 @@ func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error 
 		if err := db.Create(&history).Error; err != nil {
 			return err
 		}
+
+		documents = append(documents, history)
+	}
+
+	_, err = coll.InsertMany(context.Background(), documents)
+	if err != nil {
+		return err
 	}
 
 	return nil
