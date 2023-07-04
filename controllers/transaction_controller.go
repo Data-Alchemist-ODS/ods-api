@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/csv"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
@@ -81,7 +82,8 @@ func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error 
 
 	coll := database.GetCollection(database.GetDB(), "Transaction")
 
-	db.AutoMigrate(&Person{})
+	// yahh dimatikan dulu ini sebentar
+	// db.AutoMigrate(&Person{})
 
 	file, err := os.Open(FileData)
 	if err != nil {
@@ -107,16 +109,15 @@ func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error 
 			history.Fields[fieldName] = row[i]
 		}
 
-		if err := db.Create(&history).Error; err != nil {
+		if _, err := coll.InsertOne(context.Background(), history); err != nil {
+			log.Fatal(err)
 			return err
 		}
 
-		documents = append(documents, history)
-	}
-
-	_, err = coll.InsertMany(context.Background(), documents)
-	if err != nil {
-		return err
+		// yahh dimatikan dulu ini
+		// if err := db.Create(&history).Error; err != nil {
+		// 	return err
+		// }
 	}
 
 	return nil
