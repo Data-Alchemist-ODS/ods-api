@@ -48,6 +48,7 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to get transactions",
+			"status":  fiber.StatusInternalServerError,
 			"error":   err.Error(),
 		})
 	}
@@ -55,11 +56,16 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	if err := cursor.All(context.Background(), &transactions); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to decode transactions",
+			"status":  fiber.StatusInternalServerError,
 			"error":   err.Error(),
 		})
 	}
 
-	return c.JSON(transactions)
+	return c.JSON(fiber.Map{
+		"message": "Success get all transactions",
+		"status":  fiber.StatusOK,
+		"records": transactions,
+	})
 }
 
 func saveFileData(filename string, data []byte) error {
