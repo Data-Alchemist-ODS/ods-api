@@ -7,10 +7,8 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
 
-	"github.com/Data-Alchemist-ODS/ods-api/config"
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
@@ -79,16 +77,11 @@ type Person struct {
 func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error {
 	db := database.ConnectDB()
 
-	dsn := config.LoadENV()
-
-	db, err := gorm.Open(mongo.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return err
-	}
-
 	defer db.Disconnect(context.Background())
 
-	db.AutoMigrate(&Person{})
+	coll := database.GetCollection(database.GetDB(), "Transaction")
+
+	bd.AutoMigrate(&Person{})
 
 	file, err := os.Open(FileData)
 	if err != nil {
