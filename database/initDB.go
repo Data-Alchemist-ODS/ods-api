@@ -26,7 +26,7 @@ func ConnectDB() *mongo.Client {
 
 	fmt.Println("Successfully Connect To Database...")
 
-	mongoClient = client 
+	mongoClient = client
 
 	return client
 }
