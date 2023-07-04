@@ -20,8 +20,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	database.LoadMongoURI()
-
 	// Connect to database
 	database.ConnectDB()
 

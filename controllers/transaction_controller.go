@@ -114,6 +114,8 @@ func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error 
 			return err
 		}
 
+		documents = append(documents, &history)
+
 		// yahh dimatikan dulu ini
 		// if err := db.Create(&history).Error; err != nil {
 		// 	return err
@@ -136,5 +138,7 @@ func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "data has been saved to mongo",
+		//show the file
+		"file": request.FileData,
 	})
 }
