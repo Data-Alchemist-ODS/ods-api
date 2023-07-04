@@ -2,16 +2,16 @@ package controllers
 
 import (
 	"context"
-	"os"
-	"io/ioutil"
 	"encoding/csv"
+	"io/ioutil"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/mongo"
 	"gorm.io/gorm"
-	"go.mongodb.org/mongo-driver"
 
-	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/config"
+	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -71,7 +71,7 @@ func saveFileData(filename string, data []byte) error {
 	return nil
 }
 
-type Person struct{
+type Person struct {
 	gorm.Model
 	Fields map[string]string `gorm:"-"`
 }
