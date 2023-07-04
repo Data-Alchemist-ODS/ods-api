@@ -26,9 +26,7 @@ func ConnectDB() *mongo.Client {
 
 	fmt.Println("Successfully Connect To Database...")
 
-	//if http request then print get data
-
-	mongoClient = client // Assign the client to the global variable
+	mongoClient = client 
 
 	return client
 }
@@ -52,4 +50,13 @@ func GetCollection(client *mongo.Client, name string) *mongo.Collection { // Men
 
 func GetDB() *mongo.Client {
 	return mongoClient
+}
+
+func LoadMongoURI() string {
+	URI := godotenv.Load()
+	if URI != nil {
+		log.Fatal("Error loading MongoURI file")
+	}
+
+	return URI
 }

@@ -3,6 +3,9 @@ package controllers
 import (
 	"context"
 	"time"
+	"os"
+	"io/ioutil"
+	"encoding/base64"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -60,8 +63,12 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 }
 
 func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
+	// Koneksi ke MongoDB
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
+
+	// Mengakses koleksi transaksi
+	transactionCollection := database.GetCollection(database.GetDB(), "transaction") // Menggunakan fungsi GetCollection
 
 	var request request.TransactionCreateRequest
 	if err := c.BodyParser(&request); err != nil {
@@ -71,9 +78,19 @@ func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
 		})
 	}
 
+	// Decode base64 file data
+	fileData := string(request.FileData)
+	decodedData, err := base64.StdEncoding.DecodeString(fileData)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid file data",
+			"error":   err.Error(),
+		})
+	}
+
 	// Save file data to a temporary CSV file
 	filePath := "temp.csv"
-	if err := saveFileData(filePath, request.FileData); err != nil {
+	if err := ioutil.WriteFile(filePath, fileData, 0644); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to save file data",
 			"error":   err.Error(),
@@ -82,7 +99,7 @@ func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
 	defer os.Remove(filePath) // Remove temporary file when done
 
 	// Read the CSV file
-	records, err := readCSV(filePath)
+	records, err := repositories.ReadCSV(filePath)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to read CSV file",
@@ -99,11 +116,33 @@ func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
 		Data:          records,
 	}
 
-	// Insert transaction to the database
-	// TODO: Insert transaction to your database here
+	// Insert transaction to MongoDB
+	_, err = transactionCollection.InsertOne(context.Background(), transaction)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to insert transaction to the database",
+			"error":   err.Error(),
+		})
+	}
 
 	return c.JSON(fiber.Map{
 		"transaction": transaction,
 		"message":     "transaction created successfully",
 	})
+}
+
+func saveFileData(filename string, data []byte) error {
+	err := ioutil.WriteFile(filename, data, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
+	db := database.ConnectDB()
+	
+	defer db.Disconnect(context.Background())
+
+	
 }

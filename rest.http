@@ -7,10 +7,9 @@ POST http://127.0.0.1:8000/v1/api
 Content-Type: application/json
 
 {
-  "partition_type": "Type A",
-  "sharding_key": "Age",
+  "partitionType": "Type A",
+  "shardingKey": "Age",
   "database": "MongoDB",
-  "file_content_type": "text/csv",
-  "file_data": "test.csv"
+  "fileData": "test.csv"
 }
 
