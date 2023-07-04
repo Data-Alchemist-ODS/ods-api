@@ -51,12 +51,3 @@ func GetCollection(client *mongo.Client, name string) *mongo.Collection { // Men
 func GetDB() *mongo.Client {
 	return mongoClient
 }
-
-func LoadMongoURI() string {
-	URI := godotenv.Load()
-	if URI != nil {
-		log.Fatal("Error loading MongoURI file")
-	}
-
-	return URI
-}

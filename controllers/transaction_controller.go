@@ -2,17 +2,18 @@ package controllers
 
 import (
 	"context"
-	"time"
 	"os"
 	"io/ioutil"
-	"encoding/base64"
+	"encoding/csv"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver"
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"
+	"github.com/Data-Alchemist-ODS/ods-api/config"
 	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
-	"github.com/Data-Alchemist-ODS/ods-api/repositories"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -62,75 +63,6 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	return c.JSON(transactions)
 }
 
-func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
-	// Koneksi ke MongoDB
-	db := database.ConnectDB()
-	defer db.Disconnect(context.Background())
-
-	// Mengakses koleksi transaksi
-	transactionCollection := database.GetCollection(database.GetDB(), "transaction") // Menggunakan fungsi GetCollection
-
-	var request request.TransactionCreateRequest
-	if err := c.BodyParser(&request); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "invalid request body",
-			"error":   err.Error(),
-		})
-	}
-
-	// Decode base64 file data
-	fileData := string(request.FileData)
-	decodedData, err := base64.StdEncoding.DecodeString(fileData)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "invalid file data",
-			"error":   err.Error(),
-		})
-	}
-
-	// Save file data to a temporary CSV file
-	filePath := "temp.csv"
-	if err := ioutil.WriteFile(filePath, fileData, 0644); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "failed to save file data",
-			"error":   err.Error(),
-		})
-	}
-	defer os.Remove(filePath) // Remove temporary file when done
-
-	// Read the CSV file
-	records, err := repositories.ReadCSV(filePath)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "failed to read CSV file",
-			"error":   err.Error(),
-		})
-	}
-
-	transaction := entity.Transaction{
-		PartitionType: request.PartitionType,
-		ShardingKey:   request.ShardingKey,
-		Database:      request.Database,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
-		Data:          records,
-	}
-
-	// Insert transaction to MongoDB
-	_, err = transactionCollection.InsertOne(context.Background(), transaction)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "failed to insert transaction to the database",
-			"error":   err.Error(),
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"transaction": transaction,
-		"message":     "transaction created successfully",
-	})
-}
-
 func saveFileData(filename string, data []byte) error {
 	err := ioutil.WriteFile(filename, data, 0644)
 	if err != nil {
@@ -139,10 +71,67 @@ func saveFileData(filename string, data []byte) error {
 	return nil
 }
 
-func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
+type Person struct{
+	gorm.Model
+	Fields map[string]string `gorm:"-"`
+}
+
+func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error {
 	db := database.ConnectDB()
-	
+
+	dsn := config.LoadENV()
+
+	db, err := gorm.Open(mongo.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return err
+	}
+
 	defer db.Disconnect(context.Background())
 
-	
+	db.AutoMigrate(&Person{})
+
+	file, err := os.Open(FileData)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Read the CSV file
+	reader := csv.NewReader(file)
+	data, err := reader.ReadAll()
+	if err != nil {
+		return err
+	}
+
+	for _, row := range data {
+		history := Person{
+			Fields: make(map[string]string),
+		}
+		for i := 0; i < len(row); i++ {
+			fieldName := "Field" + string(i+1)
+			history.Fields[fieldName] = row[i]
+		}
+
+		if err := db.Create(&history).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
+	var request request.TransactionCreateRequest
+	if err := c.BodyParser(&request); err != nil {
+		return err
+	}
+
+	err := SaveToMongoDB(request.PartitionType, request.ShardingKey, request.Database, request.FileData)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "data has been saved to mongo",
+	})
 }
