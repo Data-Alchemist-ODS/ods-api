@@ -31,9 +31,12 @@ func main() {
 	// Routes
 	routes.RouteInit(app)
 
-	//handle unavailavble route
+	//handle unavailable route
 	app.Use(func(c *fiber.Ctx) error {
-		return c.SendStatus(404) // => 404 "Not Found"
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "Route not found",
+			"status":  fiber.StatusNotFound,
+		})
 	})
 
 	// Run server on specified host and port
