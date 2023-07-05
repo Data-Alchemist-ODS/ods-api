@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"encoding/csv"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -69,14 +68,6 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	})
 }
 
-func saveFileData(filename string, data []byte) error {
-	err := ioutil.WriteFile(filename, data, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 type Data struct {
 	gorm.Model
 	Fields map[string]string `gorm:"-"`
@@ -102,18 +93,20 @@ func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error 
 		return err
 	}
 
-	documents := make([]interface{}, 0)
+	documents := make([]Data, 0) // Changed the type to []Data
 
-	for _, row := range data {
-		data := Data{
+	headers := data[0]
+	for i := 1; i < len(data); i++ {
+		row := data[i]
+		doc := Data{
 			Fields: make(map[string]string),
 		}
-		for i := 0; i < len(row); i++ {
-			fieldName := "Field" + string(i+1)
-			data.Fields[fieldName] = row[i]
+
+		for j := 0; j < len(headers); j++ {
+			doc.Fields[headers[j]] = row[j]
 		}
 
-		documents = append(documents, &data)
+		documents = append(documents, doc)
 	}
 
 	if _, err := coll.InsertOne(context.Background(), bson.M{"documents": documents}); err != nil {
@@ -126,6 +119,7 @@ func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error 
 
 func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
 	var request request.TransactionCreateRequest
+
 	if err := c.BodyParser(&request); err != nil {
 		return err
 	}
