@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"encoding/csv"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // TransactionController is a contract what this controller can do
@@ -68,15 +68,7 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	})
 }
 
-func saveFileData(filename string, data []byte) error {
-	err := ioutil.WriteFile(filename, data, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type Person struct {
+type Data struct {
 	gorm.Model
 	Fields map[string]string `gorm:"-"`
 }
@@ -87,9 +79,6 @@ func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error 
 	defer db.Disconnect(context.Background())
 
 	coll := database.GetCollection(database.GetDB(), "Transaction")
-
-	// yahh dimatikan dulu ini sebentar
-	// db.AutoMigrate(&Person{})
 
 	file, err := os.Open(FileData)
 	if err != nil {
@@ -104,28 +93,25 @@ func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error 
 		return err
 	}
 
-	var documents []interface{}
+	documents := make([]Data, 0) // Changed the type to []Data
 
-	for _, row := range data {
-		history := Person{
+	headers := data[0]
+	for i := 1; i < len(data); i++ {
+		row := data[i]
+		doc := Data{
 			Fields: make(map[string]string),
 		}
-		for i := 0; i < len(row); i++ {
-			fieldName := "Field" + string(i+1)
-			history.Fields[fieldName] = row[i]
+
+		for j := 0; j < len(headers); j++ {
+			doc.Fields[headers[j]] = row[j]
 		}
 
-		if _, err := coll.InsertOne(context.Background(), history); err != nil {
-			log.Fatal(err)
-			return err
-		}
+		documents = append(documents, doc)
+	}
 
-		documents = append(documents, &history)
-
-		// yahh dimatikan dulu ini
-		// if err := db.Create(&history).Error; err != nil {
-		// 	return err
-		// }
+	if _, err := coll.InsertOne(context.Background(), bson.M{"documents": documents}); err != nil {
+		log.Fatal(err)
+		return err
 	}
 
 	return nil
@@ -133,6 +119,7 @@ func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error 
 
 func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
 	var request request.TransactionCreateRequest
+
 	if err := c.BodyParser(&request); err != nil {
 		return err
 	}
