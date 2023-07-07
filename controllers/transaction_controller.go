@@ -19,7 +19,8 @@ import (
 // TransactionController is a contract what this controller can do
 type TransactionController interface {
 	GetAllTransactions(c *fiber.Ctx) error
-	CreateTransaction(c *fiber.Ctx) error
+	CreateNewTransaction(c *fiber.Ctx) error
+	StoreData(c *fiber.Ctx) error
 }
 
 // transactionController is a struct that represent the TransactionController contract
@@ -30,10 +31,7 @@ func NewTransactionController() TransactionController {
 	return &transactionController{}
 }
 
-/*
- *  Implement functions goes down here
- */
-
+//Get All Transaction Done By User
 func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error {
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
@@ -68,17 +66,18 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	})
 }
 
+//Stored Data Passed By User
 type Data struct {
 	gorm.Model
 	Fields map[string]string `gorm:"-"`
 }
 
-func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error {
+func SaveToMongoDB(FileData string) error {
 	db := database.ConnectDB()
 
 	defer db.Disconnect(context.Background())
 
-	coll := database.GetCollection(database.GetDB(), "Transaction")
+	coll := database.GetCollection(database.GetDB(), "Data")
 
 	file, err := os.Open(FileData)
 	if err != nil {
@@ -117,14 +116,14 @@ func SaveToMongoDB(PartitionType, ShardingKey, Database, FileData string) error 
 	return nil
 }
 
-func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
-	var request request.TransactionCreateRequest
+func (controller *transactionController) StoreData(c *fiber.Ctx) error {
+	var request request.UserData
 
 	if err := c.BodyParser(&request); err != nil {
 		return err
 	}
 
-	err := SaveToMongoDB(request.PartitionType, request.ShardingKey, request.Database, request.FileData)
+	err := SaveToMongoDB(request.FileData)
 	if err != nil {
 		return err
 	}
@@ -134,4 +133,42 @@ func (controller *transactionController) CreateTransaction(c *fiber.Ctx) error {
 		//show the file
 		"file": request.FileData,
 	})
+}
+
+//POST Transaction create by user
+func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) error {
+	var request request.TransactionCreateRequest
+
+	if err := c.BodyParser(&request); err != nil {
+		return err
+	}
+
+	db := database.ConnectDB()
+
+	defer db.Disconnect(context.Background())
+
+	collection := database.GetCollection(database.GetDB(), "Transaction")
+
+	transaction := entity.Transaction{
+		PartitionType: request.PartitionType,
+		ShardingKey:   request.ShardingKey,
+		Database:      request.Database,
+	}
+
+	_, err := collection.InsertOne(context.Background(), transaction)
+	if err!=nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create transaction",
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Success create transaction",
+		"status":  fiber.StatusOK,
+		"record":  transaction,
+	})
+
+	return nil
 }

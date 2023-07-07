@@ -3,12 +3,19 @@
 GET http://127.0.0.1:8000/v1/api/transaction
 
 ###Create Transaction
-POST http://127.0.0.1:8000/v1/api
+POST http://127.0.0.1:8000/v1/api/transaction
 Content-Type: application/json
 
 {
   "partitionType": "Type A",
   "shardingKey": "Age",
-  "database": "MongoDB",
-  "fileData": "test.csv"
+  "database": "MongoDB"
+}
+
+###Create Data
+POST http://127.0.0.1:8000/v1/api/data
+Content-Type: application/json
+
+{
+  "data": "test.csv"
 }
