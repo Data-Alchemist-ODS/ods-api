@@ -138,7 +138,7 @@ func (controller *transactionController) StoreData(c *fiber.Ctx) error {
 		PartitionType: "",
 		ShardingKey:   "",
 		Database:      "",
-		Data:          [][]string{{request.FileData}}, // Store the file name in Data
+		Data:          request.FileData, // Store the file name in Data
 	}
 
 	_, err = collection.InsertOne(context.Background(), transaction)

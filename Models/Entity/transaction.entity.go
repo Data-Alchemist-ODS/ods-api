@@ -16,5 +16,5 @@ type Transaction struct {
 	Database      string             `json:"database"`
 	CreatedAt     time.Time          `json:"CreatedAt"`
 	UpdatedAt     time.Time          `json:"UpdatedAt"`
-	Data          [][]string         `json:"data"`
+	Data          string         `json:"data"`
 }
