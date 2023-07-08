@@ -1,4 +1,4 @@
-# On-Demand Database Sharding
+# On-Demand Database Sharding API
 
 This project serves as the backend component of our software, specifically focused on implementing sharding techniques. By utilizing sharding, we aim to partition and distribute data across multiple databases, ensuring efficient storage, retrieval, and management of data while maintaining a predefined schema for seamless integration with the overall software architecture.
 

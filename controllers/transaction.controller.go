@@ -128,10 +128,32 @@ func (controller *transactionController) StoreData(c *fiber.Ctx) error {
 		return err
 	}
 
+	db := database.ConnectDB()
+
+	defer db.Disconnect(context.Background())
+
+	collection := database.GetCollection(database.GetDB(), "Transaction")
+
+	transaction := entity.Transaction{
+		PartitionType: "",
+		ShardingKey:   "",
+		Database:      "",
+		Data:          [][]string{{request.FileData}}, // Store the file name in Data
+	}
+
+	_, err = collection.InsertOne(context.Background(), transaction)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create transaction",
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
+		})
+	}
+
 	return c.JSON(fiber.Map{
-		"message": "data has been saved to mongo",
-		//show the file
-		"file": request.FileData,
+		"message": "Success create transaction",
+		"status":  fiber.StatusOK,
+		"record":  transaction,
 	})
 }
 
@@ -153,10 +175,43 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		PartitionType: request.PartitionType,
 		ShardingKey:   request.ShardingKey,
 		Database:      request.Database,
+		Data: nil,
 	}
 
 	_, err := collection.InsertOne(context.Background(), transaction)
-	if err!=nil {
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create transaction",
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
+		})
+	}
+
+	data_collection := database.GetCollection(database.GetDB(), "Data")
+
+	data := entity.Data{
+		Fields: map[string]string{
+			"fileData": request.FileData,
+		},
+		PartitionType: request.PartitionType,
+		ShardingKey: request.ShardingKey,
+		Database: request.Database,
+		FileData: request.FileData,
+	}
+
+	_, err = data_collection.InsertOne(context.Background(), data)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create transaction",
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
+		})
+	}
+
+	transaction.Data = [][]string{{data.ID.Hex()}}
+
+	_, err = collection.UpdateOne(context.Background(), bson.M{"_id":transaction.ID}, bson.M{"$set":bson.M{"data":transaction.Data}})
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to create transaction",
 			"status":  fiber.StatusInternalServerError,

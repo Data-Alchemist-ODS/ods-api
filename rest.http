@@ -7,9 +7,10 @@ POST http://127.0.0.1:8000/v1/api/transaction
 Content-Type: application/json
 
 {
-  "partitionType": "Type A",
+  "partitionType": "Horizontal",
   "shardingKey": "Age",
-  "database": "MongoDB"
+  "database": "MongoDB",
+  "data": "test_file/test.csv"
 }
 
 ###Create Data
@@ -17,5 +18,5 @@ POST http://127.0.0.1:8000/v1/api/data
 Content-Type: application/json
 
 {
-  "data": "test.csv"
+  "data": "test_file/test.csv"
 }
