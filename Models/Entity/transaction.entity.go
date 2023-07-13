@@ -4,13 +4,10 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"gorm.io/gorm"
 )
 
 type Transaction struct {
-	gorm.Model
-
-	ID            primitive.ObjectID `gorm:"primaryKey" json:"transactionID"`
+	ID            primitive.ObjectID `gorm:"column:id;primaryKey" json:"transactionID" bson:"_id,omitempty"`
 	PartitionType string             `json:"partition_type"`
 	ShardingKey   string             `json:"sharding_key"`
 	Database      string             `json:"database"`
