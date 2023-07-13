@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
@@ -20,7 +21,6 @@ import (
 type TransactionController interface {
 	GetAllTransactions(c *fiber.Ctx) error
 	CreateNewTransaction(c *fiber.Ctx) error
-	StoreData(c *fiber.Ctx) error
 }
 
 // transactionController is a struct that represent the TransactionController contract
@@ -73,9 +73,6 @@ type Data struct {
 }
 
 func SaveToMongoDB(FileData string) error {
-	db := database.ConnectDB()
-
-	defer db.Disconnect(context.Background())
 
 	coll := database.GetCollection(database.GetDB(), "Data")
 
@@ -116,30 +113,32 @@ func SaveToMongoDB(FileData string) error {
 	return nil
 }
 
-func (controller *transactionController) StoreData(c *fiber.Ctx) error {
-	var request request.UserData
+//POST Transaction create by user
+func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) error {
+	var request request.TransactionCreateRequest
 
 	if err := c.BodyParser(&request); err != nil {
 		return err
 	}
 
+	db := database.ConnectDB()
+	defer db.Disconnect(context.Background())
+
+	// Save the file data to MongoDB
 	err := SaveToMongoDB(request.FileData)
 	if err != nil {
 		return err
 	}
 
-	db := database.ConnectDB()
-
-	defer db.Disconnect(context.Background())
-
 	collection := database.GetCollection(database.GetDB(), "Transaction")
 
 	transaction := entity.Transaction{
-		PartitionType: "",
-		ShardingKey:   "",
-		Database:      "",
-		Data:          request.FileData, // Store the file name in Data
+		PartitionType: request.PartitionType,
+		ShardingKey:   request.ShardingKey,
+		Database:      request.Database,
+		Data:          request.FileData,
 	}
+	transaction.ID = primitive.NewObjectID()
 
 	_, err = collection.InsertOne(context.Background(), transaction)
 	if err != nil {
@@ -155,75 +154,4 @@ func (controller *transactionController) StoreData(c *fiber.Ctx) error {
 		"status":  fiber.StatusOK,
 		"record":  transaction,
 	})
-}
-
-//POST Transaction create by user
-func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) error {
-	var request request.TransactionCreateRequest
-
-	if err := c.BodyParser(&request); err != nil {
-		return err
-	}
-
-	db := database.ConnectDB()
-
-	defer db.Disconnect(context.Background())
-
-	collection := database.GetCollection(database.GetDB(), "Transaction")
-
-	transaction := entity.Transaction{
-		PartitionType: request.PartitionType,
-		ShardingKey:   request.ShardingKey,
-		Database:      request.Database,
-		Data: nil,
-	}
-
-	_, err := collection.InsertOne(context.Background(), transaction)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to create transaction",
-			"status":  fiber.StatusInternalServerError,
-			"error":   err.Error(),
-		})
-	}
-
-	data_collection := database.GetCollection(database.GetDB(), "Data")
-
-	data := entity.Data{
-		Fields: map[string]string{
-			"fileData": request.FileData,
-		},
-		PartitionType: request.PartitionType,
-		ShardingKey: request.ShardingKey,
-		Database: request.Database,
-		FileData: request.FileData,
-	}
-
-	_, err = data_collection.InsertOne(context.Background(), data)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to create transaction",
-			"status":  fiber.StatusInternalServerError,
-			"error":   err.Error(),
-		})
-	}
-
-	transaction.Data = [][]string{{data.ID.Hex()}}
-
-	_, err = collection.UpdateOne(context.Background(), bson.M{"_id":transaction.ID}, bson.M{"$set":bson.M{"data":transaction.Data}})
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to create transaction",
-			"status":  fiber.StatusInternalServerError,
-			"error":   err.Error(),
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"message": "Success create transaction",
-		"status":  fiber.StatusOK,
-		"record":  transaction,
-	})
-
-	return nil
 }

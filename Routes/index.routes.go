@@ -15,7 +15,6 @@ func RouteInit(r *fiber.App) {
 		})
 	})
 
-	r.Post("/v1/api/data", transactionController.StoreData)
 	r.Post("/v1/api/transaction", transactionController.CreateNewTransaction)
 	r.Get("/v1/api/transaction", transactionController.GetAllTransactions)
 
