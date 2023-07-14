@@ -28,11 +28,11 @@ type TransactionController interface {
 	GetOneTransaction(c *fiber.Ctx) error
 
 	GetAllStoredDatas(c *fiber.Ctx) error
+	GetOneStoredData(c *fiber.Ctx) error
 
 	//POST HANDLER
 	CreateNewTransaction(c *fiber.Ctx) error
 
-	//UPDATE HANDLER
 	//DELETE HANDLER
 }
 
@@ -170,6 +170,59 @@ func (controller *transactionController) GetAllStoredDatas(c *fiber.Ctx) error {
 	})
 }
 
+//Get One Data From Database By Id Params
+func (controller *transactionController) GetOneStoredData(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid id format",
+			"status": fiber.StatusBadRequest,
+			"error": err.Error(),
+		})
+	}
+
+	db := database.ConnectDB()
+	defer db.Disconnect(context.Background())
+
+	client := database.GetDB()
+	collection := database.GetCollection(client, "Data")
+
+	var dataDocument entity.DataDocument
+
+	err = collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&dataDocument)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"message": "Data not found",
+				"status":  fiber.StatusNotFound,
+			})
+		}
+		log.Fatal(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to get data",
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
+		})
+	}
+
+	var dataResponses []entity.DataResponse
+
+	for _, doc := range dataDocument.Documents {
+		dataResponse := entity.DataResponse{
+			ID:     dataDocument.ID.Hex(),
+			Fields: doc.Fields,
+		}
+		dataResponses = append(dataResponses, dataResponse)
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Success get data by ID",
+		"status":  fiber.StatusOK,
+		"records": dataResponses,
+	})
+}
+
 //POST REQUEST CONTROLLER
 //POST Transaction create by user
 func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) error {
@@ -214,7 +267,5 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		"record":  transaction,
 	})
 }
-
-//UPDATE REQUEST CONTROLLER
 
 //DELETE REQUEST CONTROLLER
