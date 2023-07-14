@@ -1,7 +1,15 @@
-###Transactinon Section
+///Transactinon Section
+///GET Request
 ###Get All Transaction
 GET http://127.0.0.1:8000/v1/api/transaction
 
+###Get One Transaction
+
+###Get All Data
+
+###Get One Data
+
+///POST Request
 ###Create Transaction
 POST http://127.0.0.1:8000/v1/api/transaction
 Content-Type: application/json
@@ -12,3 +20,7 @@ Content-Type: application/json
   "database": "MongoDB",
   "data": "test_file/test.csv"
 }
+
+///UPDATE Request
+
+///DELETE Request

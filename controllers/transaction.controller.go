@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"github.com/Data-Alchemist-ODS/ods-api/database"
@@ -19,8 +18,15 @@ import (
 
 // TransactionController is a contract what this controller can do
 type TransactionController interface {
+	//GET HANDLER
 	GetAllTransactions(c *fiber.Ctx) error
+	// GetAllStoredData(c *fiber.Ctx) error
+
+	//POST HANDLER
 	CreateNewTransaction(c *fiber.Ctx) error
+
+	//UPDATE HANDLER
+	//DELETE HANDLER
 }
 
 // transactionController is a struct that represent the TransactionController contract
@@ -66,11 +72,15 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	})
 }
 
-//Stored Data Passed By User
-type Data struct {
-	gorm.Model
-	Fields map[string]string `gorm:"-"`
-}
+//Get One Data From Database
+// func (controller *transactionController) GetAllStoredData(c *fiber.Ctx) {
+// 	db := database.ConnectDB()
+// 	defer db.Disconnect(context.Background())
+
+// 	client := database.GetDB()
+
+// 	collection := database.GetCollection(client, "Data")
+// }
 
 func SaveToMongoDB(FileData string) error {
 
@@ -89,12 +99,12 @@ func SaveToMongoDB(FileData string) error {
 		return err
 	}
 
-	documents := make([]Data, 0) // Changed the type to []Data
+	documents := make([]request.Data, 0) // Changed the type to []Data
 
 	headers := data[0]
 	for i := 1; i < len(data); i++ {
 		row := data[i]
-		doc := Data{
+		doc := request.Data{
 			Fields: make(map[string]string),
 		}
 
