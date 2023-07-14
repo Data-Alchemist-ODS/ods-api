@@ -1,26 +1,31 @@
 package controllers
 
 import (
+	//default module 
 	"context"
 	"encoding/csv"
 	"log"
 	"os"
 
+	//fiber module
 	"github.com/gofiber/fiber/v2"
 
+	//mongoDB module
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson"
+
+	//local module
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // TransactionController is a contract what this controller can do
 type TransactionController interface {
 	//GET HANDLER
 	GetAllTransactions(c *fiber.Ctx) error
-	// GetAllStoredData(c *fiber.Ctx) error
+	GetAllStoredData(c *fiber.Ctx) error
 
 	//POST HANDLER
 	CreateNewTransaction(c *fiber.Ctx) error
@@ -72,16 +77,53 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	})
 }
 
-//Get One Data From Database
-// func (controller *transactionController) GetAllStoredData(c *fiber.Ctx) {
-// 	db := database.ConnectDB()
-// 	defer db.Disconnect(context.Background())
+//Get All Data From Database
+func (controller *transactionController) GetAllStoredData(c *fiber.Ctx) error {
+	client := database.GetDB()
+	collection := database.GetCollection(client, "Data")
 
-// 	client := database.GetDB()
+	var dataDocuments []entity.DataDocument
 
-// 	collection := database.GetCollection(client, "Data")
-// }
+	cursor, err := collection.Find(context.Background(), bson.M{})
+	if err != nil {
+		log.Fatal(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to get data",
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
+		})
+	}
+	defer cursor.Close(context.Background())
 
+	err = cursor.All(context.Background(), &dataDocuments)
+	if err != nil {
+		log.Fatal(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to decode data",
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
+		})
+	}
+
+	var dataResponse []entity.DataResponse
+
+	for _, doc := range dataDocuments {
+		for _, data := range doc.Documents {
+			dataResponse = append(dataResponse, entity.DataResponse{
+				ID:     doc.ID.Hex(),
+				Fields: data.Fields,
+			})
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Success get all data",
+		"status":  fiber.StatusOK,
+		"records": dataResponse,
+	})
+}
+
+//function to store data in data collection mongoDB
 func SaveToMongoDB(FileData string) error {
 
 	coll := database.GetCollection(database.GetDB(), "Data")
