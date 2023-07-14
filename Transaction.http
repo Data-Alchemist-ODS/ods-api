@@ -25,3 +25,5 @@ Content-Type: application/json
 }
 
 ///DELETE Request
+###Delete Transaction
+DELETE http://127.0.0.1:8000/v1/api/transaction/64b14b2425cb6efc7aeb4a79

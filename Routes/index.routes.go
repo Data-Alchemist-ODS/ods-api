@@ -25,4 +25,7 @@ func RouteInit(r *fiber.App) {
 	//POST ROUTES
 	r.Post("/v1/api/transaction", transactionController.CreateNewTransaction)
 	r.Post("/v1/api/connect/tidb", databaseController.ConnectToTiDB)
+
+	//DELETE ROUTES
+	r.Delete("/v1/api/transaction/:id", transactionController.DeleteTransaction)
 }

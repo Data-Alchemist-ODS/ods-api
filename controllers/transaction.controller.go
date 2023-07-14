@@ -34,6 +34,7 @@ type TransactionController interface {
 	CreateNewTransaction(c *fiber.Ctx) error
 
 	//DELETE HANDLER
+	DeleteTransaction(c *fiber.Ctx) error
 }
 
 // transactionController is a struct that represent the TransactionController contract
@@ -269,3 +270,42 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 }
 
 //DELETE REQUEST CONTROLLER
+func (controller *transactionController) DeleteTransaction(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid id format",
+			"status": fiber.StatusBadRequest,
+			"error": err.Error(),
+		})
+	}
+
+	db := database.ConnectDB()
+	defer db.Disconnect(context.Background())
+
+	client := database.GetDB()
+	collection := database.GetCollection(client, "Transaction")
+
+	result, err := collection.DeleteOne(context.Background(), bson.M{"_id": id})
+	if err != nil {
+		log.Fatal(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete transaction",
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
+		})
+	}
+
+	if result.DeletedCount == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "Transaction not found",
+			"status":  fiber.StatusNotFound,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Success delete transaction",
+		"status":  fiber.StatusOK,
+	})
+}
