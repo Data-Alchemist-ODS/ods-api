@@ -1,19 +1,19 @@
 package controllers
 
 import (
-	//default module 
+	//default modules
 	"context"
 	"log"
 
-	//fiber module
+	//fiber modules
 	"github.com/gofiber/fiber/v2"
 
-	//mongoDB module
+	//mongoDB modules
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/bson"
 
-	//local module
+	//local modules
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
@@ -93,7 +93,6 @@ func (controller *transactionController) GetAllStoredData(c *fiber.Ctx) error {
 			"error":   err.Error(),
 		})
 	}
-	defer cursor.Close(context.Background())
 
 	err = cursor.All(context.Background(), &dataDocuments)
 	if err != nil {
