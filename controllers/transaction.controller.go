@@ -3,9 +3,7 @@ package controllers
 import (
 	//default module 
 	"context"
-	"encoding/csv"
 	"log"
-	"os"
 
 	//fiber module
 	"github.com/gofiber/fiber/v2"
@@ -19,6 +17,7 @@ import (
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
+	"github.com/Data-Alchemist-ODS/ods-api/repositories"
 )
 
 // TransactionController is a contract what this controller can do
@@ -42,6 +41,7 @@ func NewTransactionController() TransactionController {
 	return &transactionController{}
 }
 
+//GET REQUEST CONTROLLER
 //Get All Transaction Done By User
 func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error {
 	db := database.ConnectDB()
@@ -123,48 +123,7 @@ func (controller *transactionController) GetAllStoredData(c *fiber.Ctx) error {
 	})
 }
 
-//function to store data in data collection mongoDB
-func SaveToMongoDB(FileData string) error {
-
-	coll := database.GetCollection(database.GetDB(), "Data")
-
-	file, err := os.Open(FileData)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	// Read the CSV file
-	reader := csv.NewReader(file)
-	data, err := reader.ReadAll()
-	if err != nil {
-		return err
-	}
-
-	documents := make([]request.Data, 0) // Changed the type to []Data
-
-	headers := data[0]
-	for i := 1; i < len(data); i++ {
-		row := data[i]
-		doc := request.Data{
-			Fields: make(map[string]string),
-		}
-
-		for j := 0; j < len(headers); j++ {
-			doc.Fields[headers[j]] = row[j]
-		}
-
-		documents = append(documents, doc)
-	}
-
-	if _, err := coll.InsertOne(context.Background(), bson.M{"documents": documents}); err != nil {
-		log.Fatal(err)
-		return err
-	}
-
-	return nil
-}
-
+//POST REQUEST CONTROLLER
 //POST Transaction create by user
 func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) error {
 	var request request.TransactionCreateRequest
@@ -177,7 +136,7 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 	defer db.Disconnect(context.Background())
 
 	// Save the file data to MongoDB
-	err := SaveToMongoDB(request.FileData)
+	err := repositories.SaveToMongoDB(request.FileData)
 	if err != nil {
 		return err
 	}
