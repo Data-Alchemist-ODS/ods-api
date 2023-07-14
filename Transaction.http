@@ -4,11 +4,13 @@
 GET http://127.0.0.1:8000/v1/api/transaction
 
 ###Get One Transaction
+GET http://127.0.0.1:8000/v1/api/transaction/64b14b2425cb6efc7aeb4a79
 
 ###Get All Data
 GET http://127.0.0.1:8000/v1/api/data
 
 ###Get One Data
+GET http://127.0.0.1:8000/v1/api/data/
 
 ///POST Request
 ###Create Transaction

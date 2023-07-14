@@ -11,6 +11,7 @@ import (
 	//mongoDB modules
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 
 	//local modules
@@ -24,7 +25,9 @@ import (
 type TransactionController interface {
 	//GET HANDLER
 	GetAllTransactions(c *fiber.Ctx) error
-	GetAllStoredData(c *fiber.Ctx) error
+	GetOneTransaction(c *fiber.Ctx) error
+
+	GetAllStoredDatas(c *fiber.Ctx) error
 
 	//POST HANDLER
 	CreateNewTransaction(c *fiber.Ctx) error
@@ -48,12 +51,11 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	defer db.Disconnect(context.Background())
 
 	client := database.GetDB() // Mengambil koneksi database dari package database
-
 	collection := database.GetCollection(client, "Transaction") // Mendapatkan objek koleksi "Transaction"
 
 	var transactions []entity.Transaction
-	cursor, err := collection.Find(context.Background(), options.Find())
 
+	cursor, err := collection.Find(context.Background(), options.Find())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to get transactions",
@@ -77,8 +79,54 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	})
 }
 
+//Get One Transaction By Id Params
+func (controller *transactionController) GetOneTransaction(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid id format",
+			"status": fiber.StatusBadRequest,
+			"error": err.Error(),
+		})
+	}
+
+	db := database.ConnectDB()
+	defer db.Disconnect(context.Background())
+
+	client := database.GetDB()
+	collection := database.GetCollection(client, "Transaction")
+
+	var transaction entity.Transaction
+
+	err = collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&transaction)
+	if err != nil{
+		if err == mongo.ErrNoDocuments{
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"message": "transaction not found in document",
+				"status": fiber.StatusNotFound,
+				"error": err.Error(),
+			})
+		}
+		log.Fatal(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to get transaction",
+			"status": fiber.StatusInternalServerError,
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"message": "success get transaction",
+		"status": fiber.StatusOK,
+		"record": transaction,
+	})
+}
+
 //Get All Data From Database
-func (controller *transactionController) GetAllStoredData(c *fiber.Ctx) error {
+func (controller *transactionController) GetAllStoredDatas(c *fiber.Ctx) error {
+	db := database.ConnectDB()
+	defer db.Disconnect(context.Background())
+
 	client := database.GetDB()
 	collection := database.GetCollection(client, "Data")
 
@@ -140,7 +188,8 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		return err
 	}
 
-	collection := database.GetCollection(database.GetDB(), "Transaction")
+	client := database.GetDB()
+	collection := database.GetCollection(client, "Transaction")
 
 	transaction := entity.Transaction{
 		PartitionType: request.PartitionType,
@@ -165,3 +214,7 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		"record":  transaction,
 	})
 }
+
+//UPDATE REQUEST CONTROLLER
+
+//DELETE REQUEST CONTROLLER
