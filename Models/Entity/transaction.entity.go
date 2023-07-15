@@ -1,8 +1,10 @@
 package entity
 
 import (
+	//local modules
 	"time"
 
+	//mongoDB modules
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

@@ -59,7 +59,7 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	cursor, err := collection.Find(context.Background(), options.Find())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to get transactions",
+			"message": "failed to get transactions",
 			"status":  fiber.StatusInternalServerError,
 			"error":   err.Error(),
 		})
@@ -67,14 +67,14 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 
 	if err := cursor.All(context.Background(), &transactions); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to decode transactions",
+			"message": "failed to decode transactions",
 			"status":  fiber.StatusInternalServerError,
 			"error":   err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
-		"message": "Success get all transactions",
+		"message": "success get all transactions",
 		"status":  fiber.StatusOK,
 		"records": transactions,
 	})

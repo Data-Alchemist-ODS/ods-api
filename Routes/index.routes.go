@@ -16,6 +16,7 @@ func RouteInit(r *fiber.App) {
 	})
 
 	//GET ROUTES
+	//Transaction Routes
 	r.Get("/v1/api/transaction", transactionController.GetAllTransactions)
 	r.Get("/v1/api/transaction/:id", transactionController.GetOneTransaction)
 
@@ -23,9 +24,11 @@ func RouteInit(r *fiber.App) {
 	r.Get("/v1/api/data/:id", transactionController.GetOneStoredData)
 
 	//POST ROUTES
+	//Transaction Routes
 	r.Post("/v1/api/transaction", transactionController.CreateNewTransaction)
 	r.Post("/v1/api/connect/tidb", databaseController.ConnectToTiDB)
 
 	//DELETE ROUTES
+	//Transaction Routes
 	r.Delete("/v1/api/transaction/:id", transactionController.DeleteTransaction)
 }
