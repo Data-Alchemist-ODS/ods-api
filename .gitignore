@@ -8,8 +8,10 @@
 *.so
 *.dylib
 
-#ignore client http
+#ignore client http transaction
 Transaction.http
+
+#ignore client http user 
 User.http
 
 # Test binary, built with `go test -c`

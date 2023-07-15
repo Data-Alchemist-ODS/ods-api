@@ -26,7 +26,8 @@ type UserController interface {
 	GetOneUser(c *fiber.Ctx) error
 
 	//POST HANDLER
-	CreateUser(c *fiber.Ctx) error
+	RegisterUser(c *fiber.Ctx) error
+	LoginUser(c *fiber.Ctx) error
 
 	//PUT HANDLER
 	UpdateUser(c *fiber.Ctx) error
@@ -79,7 +80,7 @@ func (controller *userController) GetAllUser(c *fiber.Ctx) error {
 }
 
 //Get One User From Database By Id Params
-func (controller *userController) GetOneUser (c *fiber.Ctx) error {
+func (controller *userController) GetOneUser(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil{
@@ -120,9 +121,10 @@ func (controller *userController) GetOneUser (c *fiber.Ctx) error {
 		"record": user,
 	})
 }
+
 //POST REQUEST CONTROLLER
 //Create User For Register 
-func (controller *userController) CreateUser(c *fiber.Ctx) error {
+func (controller *userController) RegisterUser(c *fiber.Ctx) error {
 	var request request.UserCreateRequest
 
 	if err := c.BodyParser(&request); err != nil {
@@ -159,6 +161,55 @@ func (controller *userController) CreateUser(c *fiber.Ctx) error {
 		"message": "success create user",
 		"status": fiber.StatusOK,
 		"record": user,
+	})
+}
+
+//Function For User Login
+func (controller *userController) LoginUser(c *fiber.Ctx) error {
+	var request request.UserLoginRequest
+
+	if err := c.BodyParser(&request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "failed to parse json",
+			"status": fiber.StatusBadRequest,
+			"error": err.Error(),
+		})
+	}
+
+	db := database.ConnectDB()
+	defer db.Disconnect(context.Background())
+
+	client := database.GetDB()
+	collection := database.GetCollection(client, "User")
+
+	var user entity.User
+
+	err := collection.FindOne(context.Background(), bson.M{"email": request.Email}).Decode(&user)
+	if err != nil{
+		if err == mongo.ErrNoDocuments{
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"message": "invalid email or password",
+				"status": fiber.StatusUnauthorized,
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to find user",
+			"status": fiber.StatusInternalServerError,
+			"error": err.Error(),
+		})
+	}
+
+	if user.Password != request.Password{
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "invalid email or password",
+			"status": fiber.StatusUnauthorized,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "success login user",
+		"status": fiber.StatusOK,
 	})
 }
 

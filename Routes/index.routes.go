@@ -30,7 +30,8 @@ func RouteInit(r *fiber.App) {
 
 	//POST ROUTES
 	//User Routes
-	r.Post("/v1/api/user", userController.CreateUser)
+	r.Post("/v1/api/user/register", userController.RegisterUser)
+	r.Post("/v1/api/user/login", userController.LoginUser)
 
 	//Transaction Routes
 	r.Post("/v1/api/transaction", transactionController.CreateNewTransaction)
@@ -39,7 +40,7 @@ func RouteInit(r *fiber.App) {
 	//PUT ROUTES
 	//User Routes
 	r.Put("/v1/api/user/update/:id", userController.UpdateUser)
-	
+
 	//DELETE ROUTES
 	//User Routes
 	r.Delete("/v1/api/user/:id", userController.DeleteOneUser)
