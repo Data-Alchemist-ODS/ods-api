@@ -109,7 +109,7 @@ func (controller *transactionController) GetOneTransaction(c *fiber.Ctx) error {
 				"error": err.Error(),
 			})
 		}
-		log.Fatal(err)
+
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to get transaction",
 			"status": fiber.StatusInternalServerError,
@@ -137,7 +137,7 @@ func (controller *transactionController) GetAllStoredDatas(c *fiber.Ctx) error {
 	if err != nil {
 		log.Fatal(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to get data",
+			"message": "failed to get data",
 			"status":  fiber.StatusInternalServerError,
 			"error":   err.Error(),
 		})
@@ -147,7 +147,7 @@ func (controller *transactionController) GetAllStoredDatas(c *fiber.Ctx) error {
 	if err != nil {
 		log.Fatal(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to decode data",
+			"message": "failed to decode data",
 			"status":  fiber.StatusInternalServerError,
 			"error":   err.Error(),
 		})
@@ -165,7 +165,7 @@ func (controller *transactionController) GetAllStoredDatas(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"message": "Success get all data",
+		"message": "success get all data",
 		"status":  fiber.StatusOK,
 		"records": dataResponse,
 	})
@@ -230,7 +230,11 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 	var request request.TransactionCreateRequest
 
 	if err := c.BodyParser(&request); err != nil {
-		return err
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "failed to parse json",
+			"status":  fiber.StatusBadRequest,
+			"error":   err.Error(),
+		})
 	}
 
 	db := database.ConnectDB()
@@ -239,7 +243,11 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 	// Save the file data to MongoDB
 	err := repositories.SaveToMongoDB(request.FileData)
 	if err != nil {
-		return err
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to save data to MongoDB",
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
+		})
 	}
 
 	client := database.GetDB()
@@ -256,20 +264,21 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 	_, err = collection.InsertOne(context.Background(), transaction)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to create transaction",
+			"message": "failed to create transaction",
 			"status":  fiber.StatusInternalServerError,
 			"error":   err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
-		"message": "Success create transaction",
+		"message": "success create transaction",
 		"status":  fiber.StatusOK,
 		"record":  transaction,
 	})
 }
 
 //DELETE REQUEST CONTROLLER
+//Delete Transaction By Id Params
 func (controller *transactionController) DeleteTransaction(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := primitive.ObjectIDFromHex(idParam)
@@ -288,24 +297,23 @@ func (controller *transactionController) DeleteTransaction(c *fiber.Ctx) error {
 	collection := database.GetCollection(client, "Transaction")
 
 	result, err := collection.DeleteOne(context.Background(), bson.M{"_id": id})
-	if err != nil {
-		log.Fatal(err)
+	if err != nil{
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to delete transaction",
+			"message": "failed to delete transaction",
 			"status":  fiber.StatusInternalServerError,
 			"error":   err.Error(),
 		})
 	}
 
-	if result.DeletedCount == 0 {
+	if result.DeletedCount == 0{
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"message": "Transaction not found",
+			"message": "transaction not found",
 			"status":  fiber.StatusNotFound,
 		})
 	}
 
 	return c.JSON(fiber.Map{
-		"message": "Success delete transaction",
+		"message": "success delete transaction",
 		"status":  fiber.StatusOK,
 	})
 }

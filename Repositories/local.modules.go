@@ -22,6 +22,7 @@ func SaveToMongoDB(FileData string) error {
 
 	file, err := os.Open(FileData)
 	if err != nil {
+		log.Fatal(err)
 		return err
 	}
 	defer file.Close()
@@ -30,6 +31,7 @@ func SaveToMongoDB(FileData string) error {
 	reader := csv.NewReader(file)
 	data, err := reader.ReadAll()
 	if err != nil {
+		log.Fatal(err)
 		return err
 	}
 
