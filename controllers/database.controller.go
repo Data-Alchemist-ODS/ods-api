@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"context"
 	"crypto/tls"
 	"database/sql"
 	"fmt"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 )
 
 // DatabaseController is a contract what this controller can do
@@ -51,7 +53,18 @@ func (controller *databaseController) ConnectToTiDB(c *fiber.Ctx) error {
 	}
 
 	// TODO save to cache
-	// ...
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	if err = rdb.Set(context.Background(), "tidb_connection", dataSourceName, 0).Err(); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to save to cache",
+			"error":   err.Error(),
+		})
+	}
 
 	return c.JSON(fiber.Map{
 		"message": "connected to TiDB",
