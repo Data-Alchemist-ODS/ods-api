@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"fmt"
+	"os"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
@@ -53,8 +54,11 @@ func (controller *databaseController) ConnectToTiDB(c *fiber.Ctx) error {
 	}
 
 	// TODO save to cache
+	host := os.Getenv("HOST")
+	port := os.Getenv("PORT")
+
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     fmt.Sprintf("%s:%s", host, port),
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
