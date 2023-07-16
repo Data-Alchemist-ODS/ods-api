@@ -3,13 +3,13 @@ package repositories
 import (
 	"encoding/csv"
 	"encoding/json"
+
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/cespare/xxhash/v2"
-	"github.com/gofiber/fiber/v2"
 )
 
 // Data structure
@@ -25,6 +25,7 @@ func check_file_format(filename string) string {
 }
 
 func GetFileContentType(filename string) string {
+
 	extension := filepath.Ext(filename)
 
 	switch extension {
@@ -43,18 +44,18 @@ func GetFileContentType(filename string) string {
 	}
 }
 
-func ReadJSON(filename string) ([][]string, error) {
+func readJSON(filename string) [][]string {
 	f := filename
 
 	content, err := ioutil.ReadFile(f)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	var jsonData []map[string]interface{}
 	err = json.Unmarshal(content, &jsonData)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	columns := make([]string, 0)
@@ -78,15 +79,16 @@ func ReadJSON(filename string) ([][]string, error) {
 		data = append(data, row)
 	}
 
-	return data, nil
+	return data
+
 }
 
 // Read data from CSV file
-func ReadCSV(filename string) ([][]string, error) {
+func readCSV(filename string) [][]string {
 	// Open the file
 	f, err := os.Open(filename)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	// Close the file
@@ -96,14 +98,14 @@ func ReadCSV(filename string) ([][]string, error) {
 	r := csv.NewReader(f)
 	records, err := r.ReadAll()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	return records, nil
+	return records
 }
 
 // Take shard key from the user
-func takeKey(records [][]string, shardCol string) string {
+func takeKey(records [][]string) string {
 	// Identified column on CSV data
 	if len(records) == 0 {
 		fmt.Println("No data")
@@ -116,10 +118,16 @@ func takeKey(records [][]string, shardCol string) string {
 		fmt.Println(col)
 	}
 
+	// Take the column name
+	var chooseCol string
+	fmt.Print("Select column to be your sharding key: ")
+	fmt.Scan(&chooseCol)
+	fmt.Println(chooseCol)
+
 	// See if input is correct
 	found := false
 	for _, col := range columns {
-		if col == shardCol {
+		if col == chooseCol {
 			found = true
 			break
 		}
@@ -129,7 +137,7 @@ func takeKey(records [][]string, shardCol string) string {
 		fmt.Println("Column not found")
 	} else {
 		fmt.Println(found)
-		return shardCol
+		return chooseCol
 	}
 
 	panic("Something Wrong")
@@ -172,36 +180,46 @@ func performSharding(records [][]string, shardKey string, numShards int) {
 	}
 }
 
-func Shard(c *fiber.Ctx) error {
-	// TODO: get the body of our POST request
-	file := "test.csv"
-	numShard := 3
+func main() {
+	file := "../test_file/test.csv"
 
 	checked_file := check_file_format(file)
-
-	if checked_file == "text/csv" {
-		records, err := ReadCSV(file)
-		if err != nil {
-			return err
-		}
-
-		chooseCol := takeKey(records, "Name")
-
-		performSharding(records, chooseCol, numShard)
-
-	} else if checked_file == "application/json" {
-		records, err := ReadJSON(file)
-		if err != nil {
-			return err
-		}
-
-		chooseCol := takeKey(records, "Name")
-
-		performSharding(records, chooseCol, numShard)
-
-	} else {
-		fmt.Println("format file not supported!!!")
-	}
-
-	return c.SendString("Sharding Success")
+	fmt.Println(checked_file)
+	fmt.Println("completed...")
 }
+
+// Main function
+// func main() {
+
+// 	var numofShard int
+
+// 	file := "../test_file/test.csv"
+
+// 	checked_file := check_file_format(file)
+
+// 	if checked_file == "text/csv" {
+// 		records := readCSV(file)
+
+// 		chooseCol := takeKey(records)
+
+// 		fmt.Print("How much sharder:")
+// 		fmt.Scan(&numofShard)
+// 		numShard := numofShard
+
+// 		performSharding(records, chooseCol, numShard)
+
+// 	} else if checked_file == "application/json" {
+// 		records := readJSON(file)
+
+// 		chooseCol := takeKey(records)
+
+// 		fmt.Print("How much sharder:")
+// 		fmt.Scan(&numofShard)
+// 		numShard := numofShard
+
+// 		performSharding(records, chooseCol, numShard)
+
+// 	} else {
+// 		fmt.Println("format file not supported!!!")
+// 	}
+// }
