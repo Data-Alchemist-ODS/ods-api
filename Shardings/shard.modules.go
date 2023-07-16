@@ -1,4 +1,4 @@
-package repositories
+package shardings
 
 import (
 	"encoding/csv"

@@ -1,4 +1,4 @@
-package repositories
+package modules
 
 import (
 	//default modules

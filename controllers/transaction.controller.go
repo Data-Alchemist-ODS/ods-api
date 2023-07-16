@@ -19,6 +19,7 @@ import (
 	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
 	"github.com/Data-Alchemist-ODS/ods-api/repositories"
+	"github.com/Data-Alchemist-ODS/ods-api/modules"
 )
 
 // TransactionController is a contract what this controller can do
@@ -241,7 +242,7 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 	defer db.Disconnect(context.Background())
 
 	// Save the file data to MongoDB
-	err := repositories.SaveToMongoDB(request.FileData)
+	err := modules.SaveToMongoDB(request.FileData)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to save data to MongoDB",
