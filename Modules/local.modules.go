@@ -2,11 +2,11 @@ package modules
 
 import (
 	//default modules
+	"context"
 	"encoding/csv"
 	"encoding/json"
+	"io/ioutil"
 	"os"
-	"context"
-	"io/ioutil"	
 	"strconv"
 
 	//fiber modules
@@ -26,7 +26,7 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 	coll := database.GetCollection(database.GetDB(), "Data")
 
 	contentType := repositories.GetFileContentType(filename)
-	
+
 	if contentType == "text/csv" {
 		file, err := os.Open(filename)
 		if err != nil {
@@ -37,7 +37,7 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 			})
 		}
 		defer file.Close()
-	
+
 		// Read the CSV file
 		reader := csv.NewReader(file)
 		data, err := reader.ReadAll()
@@ -48,19 +48,19 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 				"error":   err.Error(),
 			})
 		}
-	
+
 		headers := data[0]
 		documents := make([]map[string]interface{}, 0)
-	
+
 		for i := 1; i < len(data); i++ {
 			row := data[i]
 			doc := make(map[string]interface{})
 			doc["fields"] = make(map[string]interface{}) // Add this line to create the "fields" map
-	
+
 			for j := 0; j < len(headers); j++ {
 				fieldValue := row[j]
 				fieldType := GetFieldType(fieldValue)
-	
+
 				switch fieldType {
 				case "string":
 					doc["fields"].(map[string]interface{})[headers[j]] = fieldValue
@@ -88,10 +88,10 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 					doc["fields"].(map[string]interface{})[headers[j]] = fieldValue
 				}
 			}
-	
+
 			documents = append(documents, doc)
 		}
-	
+
 		if _, err := coll.InsertOne(context.Background(), bson.M{"documents": documents}); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "error when inserting data to MongoDB",
@@ -100,8 +100,7 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 			})
 		}
 	}
-	
-	
+
 	if contentType == "application/json" {
 		fileContent, err := ioutil.ReadFile(filename)
 		if err != nil {
@@ -111,9 +110,9 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 				"error":   err.Error(),
 			})
 		}
-	
+
 		var jsonData []map[string]interface{}
-	
+
 		err = json.Unmarshal(fileContent, &jsonData)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -122,7 +121,7 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 				"error":   err.Error(),
 			})
 		}
-	
+
 		// Convert JSON data to the desired structure
 		documents := make([]map[string]interface{}, len(jsonData))
 		for i, doc := range jsonData {
@@ -134,7 +133,7 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 				"fields": fields,
 			}
 		}
-	
+
 		if _, err := coll.InsertOne(context.Background(), bson.M{"documents": documents}); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "error when inserting data to MongoDB",
@@ -142,17 +141,17 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 				"error":   err.Error(),
 			})
 		}
-	
+
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"message": "JSON file inserted successfully",
 			"status":  fiber.StatusOK,
 		})
-	}	
+	}
 
 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 		"message": "error when reading file",
-		"status": fiber.StatusBadRequest,
-		"error": "file type not supported",
+		"status":  fiber.StatusBadRequest,
+		"error":   "file type not supported",
 	})
 }
 
