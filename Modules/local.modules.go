@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"os"
 	"context"
-	"log"
 	"io/ioutil"	
 
 	//fiber modules
@@ -30,13 +29,13 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "error when opening file",
-			"status": fiber.StatusInternalServerError
+			"status": fiber.StatusInternalServerError,
 			"error": err.Error(),
 		})
 	}
 	defer file.Close()
 
-	contentType := repositories.GetFileContentType(filename)\
+	contentType := repositories.GetFileContentType(filename)
 	if contentType == "text/csv" {
 		// Read the CSV file
 		reader := csv.NewReader(file)
@@ -74,9 +73,11 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 		}
 	}
 	
+	//STILL GOT AN ERROR HERE
 	if contentType == "application/json" {
-		//convert to csv first
-		data, err := ioutil.ReadFile(file)
+		filePath := file.Name()
+
+		data, err := ioutil.ReadFile(filePath)
 		if err != nil{
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "error when opening file",

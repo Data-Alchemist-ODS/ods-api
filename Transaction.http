@@ -20,7 +20,7 @@ Content-Type: application/json
   "partitionType": "Horizontal",
   "shardingKey": "Age",
   "database": "MongoDB",
-  "data": "test_file/test.csv"
+  "data": "test_file/test.json"
 }
 
 ///DELETE Request
