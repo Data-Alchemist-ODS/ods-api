@@ -8,10 +8,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	//mongoDB modules
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	//local modules
 	"github.com/Data-Alchemist-ODS/ods-api/database"
@@ -48,7 +48,7 @@ func NewUserController() UserController {
 //Get All User
 func (controller *userController) GetAllUser(c *fiber.Ctx) error {
 	db := database.ConnectDB()
-	defer db .Disconnect(context.Background())
+	defer db.Disconnect(context.Background())
 
 	client := database.GetDB()
 	collection := database.GetCollection(client, "User")
@@ -59,22 +59,22 @@ func (controller *userController) GetAllUser(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to get user",
-			"status": fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
 		})
 	}
 
 	if err := cursor.All(context.Background(), &users); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to decode user",
-			"status": fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
 		"message": "success get all user",
-		"status": fiber.StatusOK,
+		"status":  fiber.StatusOK,
 		"records": users,
 	})
 }
@@ -83,11 +83,11 @@ func (controller *userController) GetAllUser(c *fiber.Ctx) error {
 func (controller *userController) GetOneUser(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := primitive.ObjectIDFromHex(idParam)
-	if err != nil{
+	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid id format",
-			"status": fiber.StatusBadRequest,
-			"error": err.Error(),
+			"status":  fiber.StatusBadRequest,
+			"error":   err.Error(),
 		})
 	}
 
@@ -100,38 +100,38 @@ func (controller *userController) GetOneUser(c *fiber.Ctx) error {
 	var user entity.User
 
 	err = collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&user)
-	if err != nil{
-		if err == mongo.ErrNoDocuments{
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"message": "user not found",
-				"status": fiber.StatusNotFound,
+				"status":  fiber.StatusNotFound,
 			})
 		}
 
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to get user",
-			"status": fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
 		})
 	}
-	
+
 	return c.JSON(fiber.Map{
 		"message": "success get one user",
-		"status": fiber.StatusOK,
-		"record": user,
+		"status":  fiber.StatusOK,
+		"record":  user,
 	})
 }
 
 //POST REQUEST CONTROLLER
-//Create User For Register 
+//Create User For Register
 func (controller *userController) RegisterUser(c *fiber.Ctx) error {
 	var request request.UserCreateRequest
 
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "failed to parse json",
-			"status": fiber.StatusBadRequest,
-			"error": err.Error(),
+			"status":  fiber.StatusBadRequest,
+			"error":   err.Error(),
 		})
 	}
 
@@ -141,9 +141,18 @@ func (controller *userController) RegisterUser(c *fiber.Ctx) error {
 	client := database.GetDB()
 	collection := database.GetCollection(client, "User")
 
+	// CHECK IF EMAIL ALREADY EXIST
+	userExist := collection.FindOne(context.Background(), bson.M{"email": request.Email})
+	if userExist.Err() == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "email already exist",
+			"status":  fiber.StatusBadRequest,
+		})
+	}
+
 	user := entity.User{
-		Name: request.Name,
-		Email: request.Email,
+		Name:     request.Name,
+		Email:    request.Email,
 		Password: request.Password,
 	}
 	user.ID = primitive.NewObjectID()
@@ -152,15 +161,15 @@ func (controller *userController) RegisterUser(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to create user",
-			"status": fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
 		"message": "success create user",
-		"status": fiber.StatusOK,
-		"record": user,
+		"status":  fiber.StatusOK,
+		"record":  user,
 	})
 }
 
@@ -171,8 +180,8 @@ func (controller *userController) LoginUser(c *fiber.Ctx) error {
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "failed to parse json",
-			"status": fiber.StatusBadRequest,
-			"error": err.Error(),
+			"status":  fiber.StatusBadRequest,
+			"error":   err.Error(),
 		})
 	}
 
@@ -185,31 +194,31 @@ func (controller *userController) LoginUser(c *fiber.Ctx) error {
 	var user entity.User
 
 	err := collection.FindOne(context.Background(), bson.M{"email": request.Email}).Decode(&user)
-	if err != nil{
-		if err == mongo.ErrNoDocuments{
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"message": "invalid email or password",
-				"status": fiber.StatusUnauthorized,
+				"status":  fiber.StatusUnauthorized,
 			})
 		}
 
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to find user",
-			"status": fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
 		})
 	}
 
-	if user.Password != request.Password{
+	if user.Password != request.Password {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"message": "invalid email or password",
-			"status": fiber.StatusUnauthorized,
+			"status":  fiber.StatusUnauthorized,
 		})
 	}
 
 	return c.JSON(fiber.Map{
 		"message": "success login user",
-		"status": fiber.StatusOK,
+		"status":  fiber.StatusOK,
 	})
 }
 
@@ -218,11 +227,11 @@ func (controller *userController) LoginUser(c *fiber.Ctx) error {
 func (controller *userController) UpdateUser(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := primitive.ObjectIDFromHex(idParam)
-	if err != nil{
+	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid id format",
-			"status": fiber.StatusBadRequest,
-			"error": err.Error(),
+			"status":  fiber.StatusBadRequest,
+			"error":   err.Error(),
 		})
 	}
 
@@ -237,8 +246,8 @@ func (controller *userController) UpdateUser(c *fiber.Ctx) error {
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "failed to parse json",
-			"status": fiber.StatusBadRequest,
-			"error": err.Error(),
+			"status":  fiber.StatusBadRequest,
+			"error":   err.Error(),
 		})
 	}
 
@@ -246,31 +255,31 @@ func (controller *userController) UpdateUser(c *fiber.Ctx) error {
 		"$set": bson.M{},
 	}
 
-	if request.Name != ""{
+	if request.Name != "" {
 		update["$set"].(bson.M)["name"] = request.Name
 	}
 
-	if request.Email != ""{
+	if request.Email != "" {
 		update["$set"].(bson.M)["email"] = request.Email
 	}
 
-	if request.Password != ""{
+	if request.Password != "" {
 		update["$set"].(bson.M)["password"] = request.Password
 	}
 
 	_, err = collection.UpdateOne(context.Background(), bson.M{"_id": id}, update)
-	if err != nil{
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to update user",
-			"status": fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
 		})
 	}
 
 	return c.JSON(fiber.Map{
 		"message": "success update user",
-		"status": fiber.StatusOK,
-		"record": update,
+		"status":  fiber.StatusOK,
+		"record":  update,
 	})
 }
 
@@ -279,11 +288,11 @@ func (controller *userController) UpdateUser(c *fiber.Ctx) error {
 func (controller *userController) DeleteOneUser(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := primitive.ObjectIDFromHex(idParam)
-	if err != nil{
+	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid id format",
-			"status": fiber.StatusBadRequest,
-			"error": err.Error(),
+			"status":  fiber.StatusBadRequest,
+			"error":   err.Error(),
 		})
 	}
 
@@ -294,23 +303,23 @@ func (controller *userController) DeleteOneUser(c *fiber.Ctx) error {
 	collection := database.GetCollection(client, "User")
 
 	result, err := collection.DeleteOne(context.Background(), bson.M{"_id": id})
-	if err != nil{
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to delete user",
-			"status": fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
 		})
 	}
 
-	if result.DeletedCount == 0{ 
+	if result.DeletedCount == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"message": "user not found",
-			"status": fiber.StatusNotFound,
+			"status":  fiber.StatusNotFound,
 		})
 	}
 
 	return c.JSON(fiber.Map{
 		"message": "success delete user",
-		"status": fiber.StatusOK,
+		"status":  fiber.StatusOK,
 	})
 }
