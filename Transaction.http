@@ -19,7 +19,7 @@ Content-Type: application/json
 {
   "partitionType": "Horizontal",
   "shardingKey": "Age",
-  "database": "MongoDB",
+  "database": ["MongoDB", "Redis", "TiDB"],
   "data": "test_file/test.csv"
 }
 
