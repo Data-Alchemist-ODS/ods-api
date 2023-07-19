@@ -20,7 +20,7 @@ import (
 	"github.com/Data-Alchemist-ODS/ods-api/repositories"
 )
 
-//function to store data in data collection mongoDB
+// function to store data in data collection mongoDB
 func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 
 	coll := database.GetCollection(database.GetDB(), "Data")
