@@ -196,7 +196,7 @@ func Sharding(records [][]string, shardKey string, numShards int) {
 
 		shardIndex := hashKey(shardKey, numShards)
 
-		fmt.Printf("Shard %d: %v\n", shardIndex, model.Attributes)
+		fmt.Printf("Database %d: %v\n", shardIndex, model.Attributes)
 	}
 }
 

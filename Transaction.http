@@ -15,11 +15,11 @@ GET http://127.0.0.1:8000/v1/api/data/64b14aedc6d2467d9bb6b7b8
 ###Create Transaction
 POST http://127.0.0.1:8000/v1/api/transaction
 Content-Type: application/json
-
+  
 {
   "partitionType": "Vertical",
   "shardingKey": "Age",
-  "database": ["MongoDB", "Redis", "TiDB"],
+  "database": ["MongoDB", "Redis"],
   "data": "test_file/test.csv"
 }
 
