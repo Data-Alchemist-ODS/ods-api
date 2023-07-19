@@ -17,7 +17,7 @@ POST http://127.0.0.1:8000/v1/api/transaction
 Content-Type: application/json
 
 {
-  "partitionType": "Horizontal",
+  "partitionType": "Vertical",
   "shardingKey": "Age",
   "database": ["MongoDB", "Redis", "TiDB"],
   "data": "test_file/test.csv"

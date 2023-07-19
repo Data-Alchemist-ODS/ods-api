@@ -172,7 +172,7 @@ func count(Database []string, c *fiber.Ctx) (int, error) {
 }
 
 
-// Perform sharding
+// Perform Horizontal Sharding
 func Sharding(records [][]string, shardKey string, numShards int) {
 	columns := records[0]
 	for _, rec := range records[1:] {
@@ -254,3 +254,87 @@ func HorizontalSharding(Data string, ShardKey string, Database []string, c *fibe
 		"message": "sharding is done",
 	})
 }		
+
+
+//Perform Vertical Sharding 
+func ShardingTwo(records [][]string, shardKey string, numShards int){
+	columns := records[0]
+	numColumns := len(columns)
+	numColumnsPerDB := (numColumns - 1) / numShards // Exclude the shard key column
+
+	for i := 1; i <= numShards; i++ {
+		startIndex := (i-1)*numColumnsPerDB + 1 // Start from index 1 to exclude the shard key column
+		endIndex := i * numColumnsPerDB
+
+		dbRecords := make([][]string, 0)
+		dbRecords = append(dbRecords, columns[:1]) // Include the shard key column
+
+		for _, rec := range records[1:] {
+			dbRec := make([]string, 0)
+			dbRec = append(dbRec, rec[0]) // Include the shard key value
+
+			for j := startIndex; j <= endIndex; j++ {
+				dbRec = append(dbRec, rec[j])
+			}
+
+			dbRecords = append(dbRecords, dbRec)
+		}
+
+		fmt.Printf("Database %d: %v\n", i, dbRecords)
+	}
+}
+
+func VerticalSharding(Data string, ShardKey string, Databases []string, c *fiber.Ctx) error {
+	fileFormat := check_file_format(Data)
+	if fileFormat == "text/csv" {
+		records := readCSV(Data, c)
+
+		key, err := takeKey(ShardKey, records, c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "failed to take shard key",
+				"status":  fiber.StatusBadRequest,
+				"error":   err.Error(),
+			})
+		}
+
+		databases, err := count(Databases, c)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "failed to count databases",
+				"status":  fiber.StatusInternalServerError,
+				"error":   err.Error(),
+			})
+		}
+
+		ShardingTwo(records, key, databases)
+	}
+
+	if fileFormat == "application/json" {
+		records := readJSON(Data, c)
+
+		key, err := takeKey(ShardKey, records, c)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "failed to take shard key",
+				"status":  fiber.StatusBadRequest,
+				"error":   err.Error(),
+			})
+		}
+
+		databases, err := count(Databases, c)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "failed to count databases",
+				"status":  fiber.StatusInternalServerError,
+				"error":   err.Error(),
+			})
+		}
+
+		ShardingTwo(records, key, databases)
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "vertical sharding is done",
+	})
+}

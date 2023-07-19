@@ -287,7 +287,48 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		})
 	}
 
-	// if request.PartitionType == "Vertical" {}
+	if request.PartitionType == "Vertical" {
+
+		method := repositories.VerticalSharding(request.FileData, request.ShardingKey, request.Database, c)
+		fmt.Println(method)
+
+		// Save the file data to MongoDB
+		// err := modules.SaveToMongoDB(request.FileData, c)
+		// if err != nil {
+		// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 		"message": "failed to save data to MongoDB",
+		// 		"status":  fiber.StatusInternalServerError,
+		// 		"error":   err.Error(),
+		// 	})
+		// }
+
+		// client := database.GetDB()
+		// collection := database.GetCollection(client, "Transaction")
+
+		// transaction := entity.Transaction{
+		// 	PartitionType: request.PartitionType,
+		// 	ShardingKey:   request.ShardingKey,
+		// 	Database:	   strings.Join(request.Database, ","),
+		// 	Data:          request.FileData,
+		// }
+		// transaction.ID = primitive.NewObjectID()
+
+		// _, err = collection.InsertOne(context.Background(), transaction)
+		// if err != nil {
+		// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 		"message": "failed to create transaction",
+		// 		"status":  fiber.StatusInternalServerError,
+		// 		"error":   err.Error(),
+		// 	})
+		// }
+
+		// return c.JSON(fiber.Map{
+		// 	"message": "success create transaction",
+		// 	"status":  fiber.StatusOK,
+		// 	"record":  transaction,
+		// })
+	}
+
 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 		"message": "failed to create transaction",
 		"status":  fiber.StatusInternalServerError,
