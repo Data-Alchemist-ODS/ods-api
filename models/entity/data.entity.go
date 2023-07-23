@@ -10,7 +10,7 @@ type DataDocument struct {
 }
 
 type DataFields struct {
-	Fields map[string]string `bson:"fields,omitempty"`
+	Fields map[string]interface{} `bson:"fields,omitempty"`
 }
 
 type DataResponse struct {

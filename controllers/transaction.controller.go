@@ -6,6 +6,7 @@ import (
 	"context"
 	"log"
 	"fmt"
+	"strconv"
 
 	//fiber modules
 	"github.com/gofiber/fiber/v2"
@@ -160,9 +161,19 @@ func (controller *transactionController) GetAllStoredDatas(c *fiber.Ctx) error {
 
 	for _, doc := range dataDocuments {
 		for _, data := range doc.Documents {
+			
+			fields := make(map[string]string)
+			for key, value := range data.Fields{
+				if strValue, ok := value.(string); ok{
+					fields[key] = strValue
+				} else if numValue, ok := value.(float64); ok{
+					fields[key] = strconv.FormatFloat(numValue, 'f', -1, 64)
+				}
+			}
+
 			dataResponse = append(dataResponse, entity.DataResponse{
 				ID:     doc.ID.Hex(),
-				Fields: data.Fields,
+				Fields: fields,
 			})
 		}
 	}
@@ -213,9 +224,19 @@ func (controller *transactionController) GetOneStoredData(c *fiber.Ctx) error {
 	var dataResponses []entity.DataResponse
 
 	for _, doc := range dataDocument.Documents {
+
+		fields := make(map[string]string)
+		for key, value := range doc.Fields{
+			if strValue, ok := value.(string); ok{
+				fields[key] = strValue
+			} else if numValue, ok := value.(float64); ok{
+				fields[key] = strconv.FormatFloat(numValue, 'f', -1, 64)
+			}
+		}
+
 		dataResponse := entity.DataResponse{
 			ID:     dataDocument.ID.Hex(),
-			Fields: doc.Fields,
+			Fields: fields,
 		}
 		dataResponses = append(dataResponses, dataResponse)
 	}
@@ -287,10 +308,10 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		})
 	}
 
-	if request.PartitionType == "Vertical" {
+	// if request.PartitionType == "Vertical" {
 
-		method := repositories.VerticalSharding(request.FileData, request.ShardingKey, request.Database, c)
-		fmt.Println(method)
+	// 	method := repositories.VerticalSharding(request.FileData, request.ShardingKey, request.Database, c)
+	// 	fmt.Println(method)
 
 		// Save the file data to MongoDB
 		// err := modules.SaveToMongoDB(request.FileData, c)
@@ -327,7 +348,7 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		// 	"status":  fiber.StatusOK,
 		// 	"record":  transaction,
 		// })
-	}
+	// }
 
 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 		"message": "failed to create transaction",
