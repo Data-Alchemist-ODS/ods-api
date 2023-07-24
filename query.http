@@ -1,6 +1,0 @@
-POST http://127.0.0.1:8000/v1/api/query
-Content-Type: application/json
-
-{
-    "prompt":"tell me 10 great movies you know"
-}
