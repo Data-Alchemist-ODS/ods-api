@@ -312,6 +312,8 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		method := repositories.VerticalSharding(request.FileData, request.ShardingKey, request.Database, c)
 		fmt.Println(method)
 
+		//IF THE LOGIC IS DONE THEN ACTIVATE THIS CODE AGAIN
+		
 		// Save the file data to MongoDB
 		// err := modules.SaveToMongoDB(request.FileData, c)
 		// if err != nil {

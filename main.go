@@ -3,14 +3,20 @@
 package main
 
 import (
+	//default modules
 	"fmt"
 	"log"
 	"os"
 
+	//fiber modules
+	"github.com/gofiber/fiber/v2"
+
+	//third-party modules
+	"github.com/joho/godotenv"
+
+	//local modules
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/routes"
-	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
 )
 
 func main() {

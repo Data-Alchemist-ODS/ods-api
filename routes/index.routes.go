@@ -9,12 +9,17 @@ func RouteInit(r *fiber.App) {
 	transactionController := controllers.NewTransactionController()
 	databaseController := controllers.NewDatabaseController()
 	userController := controllers.NewUserController()
+	queryController := controllers.NewNaturalQueryController()
 
 	r.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
-			"message": "Welcome to On-demand Data Sharding 👋",
+			"message": "Welcome to On-demand Data Sharding API Public Endpoint👋",
+			"status" : fiber.StatusOK,
 		})
 	})
+
+	//This is for natural query that uses GPTAPI
+	r.Post("/v1/api/query", queryController.NaturalQuery)
 
 	//GET ROUTES
 	//User Routes
