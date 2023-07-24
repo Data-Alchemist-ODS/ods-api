@@ -270,7 +270,6 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		method := repositories.HorizontalSharding(request.FileData, request.ShardingKey, request.Database, c)
 		fmt.Println(method)
 
-		
 		// Save the file data to MongoDB
 		err := modules.SaveToMongoDB(request.FileData, c)
 		if err != nil {
@@ -308,10 +307,10 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		})
 	}
 
-	// if request.PartitionType == "Vertical" {
+	if request.PartitionType == "Vertical" {
 
-	// 	method := repositories.VerticalSharding(request.FileData, request.ShardingKey, request.Database, c)
-	// 	fmt.Println(method)
+		method := repositories.VerticalSharding(request.FileData, request.ShardingKey, request.Database, c)
+		fmt.Println(method)
 
 		// Save the file data to MongoDB
 		// err := modules.SaveToMongoDB(request.FileData, c)
@@ -348,7 +347,7 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		// 	"status":  fiber.StatusOK,
 		// 	"record":  transaction,
 		// })
-	// }
+	}
 
 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 		"message": "failed to create transaction",

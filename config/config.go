@@ -7,13 +7,24 @@ import (
 	"github.com/joho/godotenv"
 )
 
-//function config
-func LoadENV () string {
+//Database function config
+func LoadENV() string {
 	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	if err != nil{
+		log.Fatal("error loading .env file")
 	}
 
 	//return os.getENV
 	return os.Getenv("DATABASE_URL")
+}
+
+//API function config
+func LoadAPIKey() string {
+	err := godotenv.Load()
+	if err != nil{
+		log.Fatal("error loading .env file")
+	}
+
+	//return os.getENVq
+	return os.Getenv("API_KEY")
 }

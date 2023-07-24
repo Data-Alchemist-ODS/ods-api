@@ -1,15 +1,19 @@
 package repositories
 
 import (
+	//default modules
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"hash/fnv"
 
+	//fiber modules
 	"github.com/gofiber/fiber/v2"
 
+	//third party modules
 	"github.com/cespare/xxhash/v2"
 )
 
@@ -173,7 +177,7 @@ func count(Database []string, c *fiber.Ctx) (int, error) {
 
 
 // Perform Horizontal Sharding
-func Sharding(records [][]string, shardKey string, numShards int) {
+func shardForHorizontal(records [][]string, shardKey string, numShards int) {
 	columns := records[0]
 	for _, rec := range records[1:] {
 		model := Data{
@@ -223,7 +227,7 @@ func HorizontalSharding(Data string, ShardKey string, Database []string, c *fibe
 			})
 		}
 
-		Sharding(records, key, databases)
+		shardForHorizontal(records, key, databases)
 	}
 
 	if fileFormat == "application/json" {
@@ -247,41 +251,83 @@ func HorizontalSharding(Data string, ShardKey string, Database []string, c *fibe
 			})
 		}
 
-		Sharding(records, key, databases)
+		shardForHorizontal(records, key, databases)
 	}
 
 	return c.JSON(fiber.Map{
-		"message": "sharding is done",
+		"message": "shard is done",
 	})
 }		
 
 
-//Perform Vertical Sharding 
-func ShardingTwo(records [][]string, shardKey string, numShards int){
-	columns := records[0]
-	numColumns := len(columns)
-	numColumnsPerDB := (numColumns - 1) / numShards // Exclude the shard key column
+//THE LOGIC IS FALSE HERE!!!
+// Vertical Sharding
+func shardForVertical(records [][]string, shardKey string, numShards int) {
+	shardsMap := make([]map[string]string, numShards)
 
-	for i := 1; i <= numShards; i++ {
-		startIndex := (i-1)*numColumnsPerDB + 1 // Start from index 1 to exclude the shard key column
-		endIndex := i * numColumnsPerDB
+	for i := 0; i < numShards; i++ {
+		shardsMap[i] = make(map[string]string)
+	}
 
-		dbRecords := make([][]string, 0)
-		dbRecords = append(dbRecords, columns[:1]) // Include the shard key column
+	// Find the index of the shardKey column
+	shardKeyIndex := -1
+	for i, columnName := range records[0] {
+		if columnName == shardKey {
+			shardKeyIndex = i
+			break
+		}
+	}
 
-		for _, rec := range records[1:] {
-			dbRec := make([]string, 0)
-			dbRec = append(dbRec, rec[0]) // Include the shard key value
+	if shardKeyIndex == -1 {
+		fmt.Println("Shard key not found in the columns.")
+		return
+	}
 
-			for j := startIndex; j <= endIndex; j++ {
-				dbRec = append(dbRec, rec[j])
+	// Iterate over rows (skip header)
+	for rowIndex := 1; rowIndex < len(records); rowIndex++ {
+		row := records[rowIndex]
+		if len(row) <= shardKeyIndex {
+			fmt.Println("Invalid record format. Shard key index out of range.")
+			return
+		}
+		shardKey := row[shardKeyIndex]
+
+		// Create the shard value using the shard key and other column values
+		shardValue := ""
+		for colIndex, columnName := range records[0] {
+			if colIndex == shardKeyIndex {
+				shardValue = fmt.Sprintf("%s: %s", columnName, shardKey)
+			} else {
+				shardValue += fmt.Sprintf(" %s: %s", columnName, row[colIndex])
 			}
-
-			dbRecords = append(dbRecords, dbRec)
 		}
 
-		fmt.Printf("Database %d: %v\n", i, dbRecords)
+		// Calculate the shard index based on the shard key using consistent hashing
+		shardIndex := consistentHash(shardKey, numShards)
+
+		shardsMap[shardIndex][shardValue] = fmt.Sprintf("map[%s]", shardValue)
 	}
+
+	// Output
+	for i, shardMap := range shardsMap {
+		fmt.Printf("Shard %d:\n", i)
+		for _, value := range shardMap {
+			fmt.Println(value)
+		}
+		fmt.Println()
+	}
+}
+
+// Custom function for consistent hashing
+func consistentHash(key string, numShards int) int {
+	hash := fnv.New32a()
+	_, _ = hash.Write([]byte(key))
+	hashValue := int(hash.Sum32())
+	shardIndex := hashValue % numShards
+	if shardIndex < 0 {
+		shardIndex = -shardIndex
+	}
+	return shardIndex
 }
 
 func VerticalSharding(Data string, ShardKey string, Databases []string, c *fiber.Ctx) error {
@@ -292,9 +338,8 @@ func VerticalSharding(Data string, ShardKey string, Databases []string, c *fiber
 		key, err := takeKey(ShardKey, records, c)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "failed to take shard key",
-				"status":  fiber.StatusBadRequest,
-				"error":   err.Error(),
+				"status": fiber.StatusBadRequest,
+				"error":  err.Error(),
 			})
 		}
 
@@ -307,7 +352,7 @@ func VerticalSharding(Data string, ShardKey string, Databases []string, c *fiber
 			})
 		}
 
-		ShardingTwo(records, key, databases)
+		shardForVertical(records, key, databases)
 	}
 
 	if fileFormat == "application/json" {
@@ -331,7 +376,7 @@ func VerticalSharding(Data string, ShardKey string, Databases []string, c *fiber
 			})
 		}
 
-		ShardingTwo(records, key, databases)
+		shardForVertical(records, key, databases)
 	}
 
 	return c.JSON(fiber.Map{
