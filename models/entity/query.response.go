@@ -1,5 +1,5 @@
 package entity
 
-type queryResp struct {
+type QueryResp struct {
 	Response string `json:"response"`
 }

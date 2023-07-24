@@ -1,10 +1,8 @@
-package query
+package controllers
 
 import (
 	//default modules
 	"context"
-	"fmt"
-	"log"
 
 	//fiber modules
 	"github.com/gofiber/fiber/v2"
@@ -14,8 +12,8 @@ import (
 
 	//local modules
 	"github.com/Data-Alchemist-ODS/ods-api/config"
-	"github.com/Data-Alchemist-ODS/ods-api/entity"
-	"github.com/Data-Alchemist-ODS/ods-api/request"
+	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
+	"github.com/Data-Alchemist-ODS/ods-api/models/request"
 )
 
 //The contract
@@ -33,7 +31,7 @@ func NewNaturalQueryController() NaturalQueryController {
 
 //Create a new natural query
 func (controller *naturalqueryController) CreateNaturalQuery(c *fiber.Ctx) error {
-	req := new()
+	req := new(request.QueryReq)
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "failed to parse request body",
@@ -48,8 +46,10 @@ func (controller *naturalqueryController) CreateNaturalQuery(c *fiber.Ctx) error
 		api.ChatCompletionRequest{
 			Model: api.GPT3Dot5Turbo,
 			Messages: []api.ChatCompletionMessage{
-				Role: api.ChatMessageRoleUser,
-				Content: req.Prompt,
+				{
+					Role: api.ChatMessageRoleUser,
+					Content: req.Prompt,
+				},
 			},
 		},
 	)
@@ -62,8 +62,8 @@ func (controller *naturalqueryController) CreateNaturalQuery(c *fiber.Ctx) error
 	return c.JSON(fiber.Map{
 		"message": "success",
 		"status":  fiber.StatusOK,
-		"query": entity.queryResp(
+		"query": entity.QueryResp{
 			Response: resp.Choices[0].Message.Content,
-		),
+		},
 	})
 }

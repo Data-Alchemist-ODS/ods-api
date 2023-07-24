@@ -1,5 +1,5 @@
 package request
 
-type queryReq struct {
+type QueryReq struct {
 	Prompt string `json:"prompt"`
 }

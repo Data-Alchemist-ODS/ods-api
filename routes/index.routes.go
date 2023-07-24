@@ -19,7 +19,7 @@ func RouteInit(r *fiber.App) {
 	})
 
 	//This is for natural query that uses GPTAPI
-	r.Post("/v1/api/query", queryController.NaturalQuery)
+	r.Post("/v1/api/query", queryController.CreateNaturalQuery)
 
 	//GET ROUTES
 	//User Routes
