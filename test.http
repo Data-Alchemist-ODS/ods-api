@@ -1,0 +1,11 @@
+POST http://127.0.0.1:8000/v1/api/transaction
+Content-Type: application/json
+
+{
+    "partitionType":"Horizontal",
+    "shardingKey":"Code",
+    "database":["TiDB", "MongoDB", "MySQL"],
+    "data":"test_file/airpassengers.csv"
+}
+###
+GET http://127.0.0.1:8000/v1/api/transaction
