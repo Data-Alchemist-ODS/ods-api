@@ -276,8 +276,6 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		}
 	}
 
-	fmt.Println(request)
-
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
 
