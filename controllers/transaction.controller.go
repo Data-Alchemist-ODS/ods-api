@@ -2,20 +2,22 @@ package controllers
 
 import (
 	//default modules
-	"strings"
 	"context"
-	"log"
 	"fmt"
+	"log"
 	"strconv"
+	"strings"
+
+	"github.com/go-playground/validator/v10"
 
 	//fiber modules
 	"github.com/gofiber/fiber/v2"
 
 	//mongoDB modules
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	//local modules
 	"github.com/Data-Alchemist-ODS/ods-api/database"
@@ -24,6 +26,9 @@ import (
 	"github.com/Data-Alchemist-ODS/ods-api/modules"
 	"github.com/Data-Alchemist-ODS/ods-api/repositories"
 )
+
+// validator is a variable that represent the validator module
+var validate = validator.New()
 
 // TransactionController is a contract what this controller can do
 type TransactionController interface {
@@ -49,13 +54,13 @@ func NewTransactionController() TransactionController {
 	return &transactionController{}
 }
 
-//GET REQUEST CONTROLLER
-//Get All Transaction Done By User
+// GET REQUEST CONTROLLER
+// Get All Transaction Done By User
 func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error {
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
 
-	client := database.GetDB() // Mengambil koneksi database dari package database
+	client := database.GetDB()                                  // Mengambil koneksi database dari package database
 	collection := database.GetCollection(client, "Transaction") // Mendapatkan objek koleksi "Transaction"
 
 	var transactions []entity.Transaction
@@ -84,15 +89,15 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	})
 }
 
-//Get One Transaction By Id Params
+// Get One Transaction By Id Params
 func (controller *transactionController) GetOneTransaction(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := primitive.ObjectIDFromHex(idParam)
-	if err != nil{
+	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid id format",
-			"status": fiber.StatusBadRequest,
-			"error": err.Error(),
+			"status":  fiber.StatusBadRequest,
+			"error":   err.Error(),
 		})
 	}
 
@@ -105,29 +110,29 @@ func (controller *transactionController) GetOneTransaction(c *fiber.Ctx) error {
 	var transaction entity.Transaction
 
 	err = collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&transaction)
-	if err != nil{
-		if err == mongo.ErrNoDocuments{
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"message": "transaction not found in document",
-				"status": fiber.StatusNotFound,
-				"error": err.Error(),
+				"status":  fiber.StatusNotFound,
+				"error":   err.Error(),
 			})
 		}
 
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to get transaction",
-			"status": fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
 		})
 	}
 	return c.JSON(fiber.Map{
 		"message": "success get transaction",
-		"status": fiber.StatusOK,
-		"record": transaction,
+		"status":  fiber.StatusOK,
+		"record":  transaction,
 	})
 }
 
-//Get All Data From Database
+// Get All Data From Database
 func (controller *transactionController) GetAllStoredDatas(c *fiber.Ctx) error {
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
@@ -161,12 +166,12 @@ func (controller *transactionController) GetAllStoredDatas(c *fiber.Ctx) error {
 
 	for _, doc := range dataDocuments {
 		for _, data := range doc.Documents {
-			
+
 			fields := make(map[string]string)
-			for key, value := range data.Fields{
-				if strValue, ok := value.(string); ok{
+			for key, value := range data.Fields {
+				if strValue, ok := value.(string); ok {
 					fields[key] = strValue
-				} else if numValue, ok := value.(float64); ok{
+				} else if numValue, ok := value.(float64); ok {
 					fields[key] = strconv.FormatFloat(numValue, 'f', -1, 64)
 				}
 			}
@@ -185,15 +190,15 @@ func (controller *transactionController) GetAllStoredDatas(c *fiber.Ctx) error {
 	})
 }
 
-//Get One Data From Database By Id Params
+// Get One Data From Database By Id Params
 func (controller *transactionController) GetOneStoredData(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := primitive.ObjectIDFromHex(idParam)
-	if err != nil{
+	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid id format",
-			"status": fiber.StatusBadRequest,
-			"error": err.Error(),
+			"status":  fiber.StatusBadRequest,
+			"error":   err.Error(),
 		})
 	}
 
@@ -226,10 +231,10 @@ func (controller *transactionController) GetOneStoredData(c *fiber.Ctx) error {
 	for _, doc := range dataDocument.Documents {
 
 		fields := make(map[string]string)
-		for key, value := range doc.Fields{
-			if strValue, ok := value.(string); ok{
+		for key, value := range doc.Fields {
+			if strValue, ok := value.(string); ok {
 				fields[key] = strValue
-			} else if numValue, ok := value.(float64); ok{
+			} else if numValue, ok := value.(float64); ok {
 				fields[key] = strconv.FormatFloat(numValue, 'f', -1, 64)
 			}
 		}
@@ -248,8 +253,8 @@ func (controller *transactionController) GetOneStoredData(c *fiber.Ctx) error {
 	})
 }
 
-//POST REQUEST CONTROLLER
-//POST Transaction create by user
+// POST REQUEST CONTROLLER
+// POST Transaction create by user
 func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) error {
 	var request request.TransactionCreateRequest
 
@@ -261,12 +266,24 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		})
 	}
 
+	if err := validate.Struct(request); err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "invalid " + err.Field() + " format",
+				"status":  fiber.StatusBadRequest,
+				"error":   err.Error(),
+			})
+		}
+	}
+
+	fmt.Println(request)
+
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
 
 	//Perform Sharding Using Local Modules In Repositories
 	if request.PartitionType == "Horizontal" {
-	
+
 		method := repositories.HorizontalSharding(request.FileData, request.ShardingKey, request.Database, c)
 		fmt.Println(method)
 
@@ -286,7 +303,7 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		transaction := entity.Transaction{
 			PartitionType: request.PartitionType,
 			ShardingKey:   request.ShardingKey,
-			Database:	   strings.Join(request.Database, ","),
+			Database:      strings.Join(request.Database, ","),
 			Data:          request.FileData,
 		}
 		transaction.ID = primitive.NewObjectID()
@@ -313,7 +330,7 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		fmt.Println(method)
 
 		//IF THE LOGIC IS DONE THEN ACTIVATE THIS CODE AGAIN
-		
+
 		// Save the file data to MongoDB
 		// err := modules.SaveToMongoDB(request.FileData, c)
 		// if err != nil {
@@ -358,16 +375,16 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 	})
 }
 
-//DELETE REQUEST CONTROLLER
-//Delete Transaction By Id Params
+// DELETE REQUEST CONTROLLER
+// Delete Transaction By Id Params
 func (controller *transactionController) DeleteTransaction(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 	id, err := primitive.ObjectIDFromHex(idParam)
-	if err != nil{
+	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "invalid id format",
-			"status": fiber.StatusBadRequest,
-			"error": err.Error(),
+			"status":  fiber.StatusBadRequest,
+			"error":   err.Error(),
 		})
 	}
 
@@ -378,7 +395,7 @@ func (controller *transactionController) DeleteTransaction(c *fiber.Ctx) error {
 	collection := database.GetCollection(client, "Transaction")
 
 	result, err := collection.DeleteOne(context.Background(), bson.M{"_id": id})
-	if err != nil{
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to delete transaction",
 			"status":  fiber.StatusInternalServerError,
@@ -386,7 +403,7 @@ func (controller *transactionController) DeleteTransaction(c *fiber.Ctx) error {
 		})
 	}
 
-	if result.DeletedCount == 0{
+	if result.DeletedCount == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"message": "transaction not found",
 			"status":  fiber.StatusNotFound,
