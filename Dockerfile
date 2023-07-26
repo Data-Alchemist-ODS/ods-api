@@ -28,8 +28,8 @@ WORKDIR /app
 # Copy the built binary from the previous stage
 COPY --from=0 /app/app .
 
-# Tandai port 8000 yang akan digunakan oleh aplikasi
-EXPOSE 8000
+# Tandai port 8080 yang akan digunakan oleh aplikasi
+EXPOSE 8080
 
 # Run the Go Fiber application
 CMD ["./app"]
