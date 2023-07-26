@@ -47,6 +47,10 @@ jobs:
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
 
+      - name: Configure .env in Docker container
+        run: |
+          echo "${{ secrets.ENV }}" > .env
+
       # Add post-actions here to fix Docker socket permission
       - name: Fix Docker socket permission
         uses: appleboy/ssh-action@master
