@@ -64,10 +64,10 @@ jobs:
             echo "${{ secrets.ENV }}" > $GITHUB_WORKSPACE/.env
             # Set appropriate permissions for .env file to be read by Docker.
             chmod 644 $GITHUB_WORKSPACE/.env
-            # Stop the running container, if any.
+            # Stop and remove the running container, if any.
             docker stop ods || true
-            # Remove the container, if any.
             docker rm ods || true
             # Run the Docker container with the .env file mounted inside.
-            docker run -d --name ods -p 8080:8080 --privileged -v $GITHUB_WORKSPACE/.env:/app/.env ***/ods:latest
-        
+            docker run -d --name ods -p 8080:8080 --privileged -v $GITHUB_WORKSPACE/.env:/app/.env your_docker_username/ods:latest
+  
+  
