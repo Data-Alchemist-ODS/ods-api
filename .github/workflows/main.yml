@@ -51,7 +51,7 @@ jobs:
         run: |
           echo "${{ secrets.ENV }}" > .env
 
-      # Add post-actions here to fix Docker socket permission
+      # Add post-actionss here to fix Docker socket permission
       - name: Fix Docker socket permission
         uses: appleboy/ssh-action@master
         with:
