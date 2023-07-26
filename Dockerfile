@@ -1,7 +1,7 @@
 # Langkah pertama, pilih base image yang sesuai untuk Go
 FROM golang:1.20.5-alpine
 
-# Set working directory di dalam wadah
+# Set working directory di dalam wadahnya
 WORKDIR /app
 
 # Copy file go.mod dan go.sum terlebih dahulu agar dependensi dapat di-cache
