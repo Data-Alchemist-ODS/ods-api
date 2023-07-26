@@ -12,6 +12,7 @@ import (
 
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
+	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
 )
 
 // function to store data in data collection mongoDB
@@ -27,6 +28,10 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
             "error":   err.Error(),
         })
     }
+
+	fileData := entity.FileData{
+		FileName: file.Filename,
+	}
 
     content, err := file.Open()
     if err != nil {
@@ -73,7 +78,7 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 			data = append(data, child)
 		}
 
-		if _, err := coll.InsertOne(context.Background(), bson.M{"documents": filename, "data": data}); err != nil {
+		if _, err := coll.InsertOne(context.Background(), bson.M{"documents": fileData, "data": data}); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "error when inserting data to MongoDB",
 				"status":  fiber.StatusInternalServerError,
@@ -101,7 +106,7 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 			})
 		}
 
-		if _, err := coll.InsertOne(context.Background(), bson.M{"documents": filename, "data": data}); err != nil {
+		if _, err := coll.InsertOne(context.Background(), bson.M{"documents": fileData, "data": data}); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "error when inserting data to MongoDB",
 				"status":  fiber.StatusInternalServerError,
