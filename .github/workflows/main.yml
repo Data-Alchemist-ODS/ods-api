@@ -64,17 +64,12 @@ jobs:
             echo "${{ secrets.ENV }}" > .env
             # Set appropriate permissions for .env file to be read by Docker.
             chmod 644 .env
-
-            # Verify the permissions of .env before copying it to the container.
-            ls -al .env
-
-            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_ACCESS_TOKEN }}
-            docker pull ${{ secrets.DOCKER_USERNAME }}/ods:latest
+            # Stop the running container, if any.
             docker stop ods || true
+            # Remove the container, if any.
             docker rm ods || true
-
-            # Use docker cp to copy the .env file into the container.
+            # Copy the .env file into the container using the docker cp command.
             docker cp .env ods:/.env
-            
             # Run the Docker container with the .env file mounted inside.
-            docker run -d --name ods -p 8080:8080 --privileged -v $PWD/.env:/.env ${{ secrets.DOCKER_USERNAME }}/ods:latest
+            docker run -d --name ods -p 8080:8080 --privileged -v $PWD/.env:/.env ***/ods:latest
+  
