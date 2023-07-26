@@ -47,6 +47,17 @@ jobs:
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
 
+      # Add post-actions here to fix Docker socket permission
+      - name: Fix Docker socket permission
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            sudo chmod 666 /var/run/docker.sock
+
   deployment:
     needs: release
     runs-on: ubuntu-latest
