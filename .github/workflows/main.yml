@@ -53,9 +53,10 @@ jobs:
           key: ${{ secrets.PRIVATE_KEY }}
           port: ${{ secrets.PORT }}
           script: |
-            ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+            ssh-keyscan -H *** >> ~/.ssh/known_hosts
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_ACCESS_TOKEN }}
             docker pull ${{ secrets.DOCKER_USERNAME }}/ods:latest
             docker stop ods || true
             docker rm ods || true
-            docker run -d --name ods -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/ods:latest
+            docker run -d --name ods -p 8080:8080 --privileged ${{ secrets.DOCKER_USERNAME }}/ods:latest
+        
