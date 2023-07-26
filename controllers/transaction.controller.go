@@ -282,7 +282,7 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 	//Perform Sharding Using Local Modules In Repositories
 	if request.PartitionType == "Horizontal" {
 
-		method := repositories.HorizontalSharding(request.FileData, request.ShardingKey, request.Database, c)
+		method := repositories.HorizontalSharding("data", request.ShardingKey, request.Database, c)
 		fmt.Println(method)
 
 		// Save the file data to MongoDB
