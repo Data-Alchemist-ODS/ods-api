@@ -39,3 +39,21 @@ jobs:
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.image_digest }}
+
+  deployment:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: |
+            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_ACCESS_TOKEN }}
+            docker pull ${{ secrets.DOCKER_USERNAME }}/ods:latest
+            docker stop ods
+            docker rm ods
+            docker run -d --name ods -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/ods:latest
