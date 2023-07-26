@@ -217,6 +217,7 @@ func (controller *userController) LoginUser(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
+		"user_id": user.ID.Hex(),
 		"message": "success login user",
 		"status":  fiber.StatusOK,
 	})

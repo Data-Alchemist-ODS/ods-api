@@ -1,5 +1,7 @@
 package request
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
 type UserCreateRequest struct {
 	Name 		string `json:"name"`
 	Email 		string `json:"email"`
@@ -7,6 +9,7 @@ type UserCreateRequest struct {
 }
 
 type UserLoginRequest struct {
-	Email 		string `json:"email"`
-	Password 	string `json:"password"`
+	ID			primitive.ObjectID  `bson:"_id,omitempty"`
+	Email 		string 				`json:"email"`
+	Password 	string 				`json:"password"`
 }
