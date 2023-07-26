@@ -62,8 +62,11 @@ jobs:
           # on VPS before running the Docker container.
           script: |
             echo "${{ secrets.ENV }}" > .env
+            # Set appropriate permissions for .env file to be read by Docker.
+            chmod 644 .env
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_ACCESS_TOKEN }}
             docker pull ${{ secrets.DOCKER_USERNAME }}/ods:latest
             docker stop ods || true
             docker rm ods || true
             docker run -d --name ods -p 8080:8080 --privileged --env-file .env ${{ secrets.DOCKER_USERNAME }}/ods:latest
+        
