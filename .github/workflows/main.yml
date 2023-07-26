@@ -49,7 +49,7 @@ jobs:
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.PASSWORD }}
+          key: ${{ secrets.PRIVATE_KEY }}
           port: ${{ secrets.PORT }}
           script: |
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_ACCESS_TOKEN }}
@@ -57,3 +57,4 @@ jobs:
             docker stop ods
             docker rm ods
             docker run -d --name ods -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/ods:latest
+        
