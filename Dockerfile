@@ -28,13 +28,6 @@ WORKDIR /app
 # Copy the built binary from the previous stage
 COPY --from=0 /app/app .
 
-# Tetapkan variabel lingkungan yang diperlukan (sesuaikan dengan .env Anda)
-ENV DATABASE_URL=mongodb+srv://AdrianBadjideh:vQPm8EgUsKlIeeT2@ods.rycue7a.mongodb.net/?retryWrites=true&w=majority
-ENV API_KEY=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
-ENV DATABASE=ODS
-ENV HOST=localhost
-ENV PORT=8000
-
 # Tandai port 8000 yang akan digunakan oleh aplikasi
 EXPOSE 8000
 
