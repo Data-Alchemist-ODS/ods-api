@@ -61,12 +61,12 @@ jobs:
           # Retrieve the content of .env from secrets and save it to .env file
           # on VPS before running the Docker container.
           script: |
-            echo "${{ secrets.ENV }}" > $GITHUB_WORKSPACE/.env
+            echo "${{ secrets.ENV }}" > .env
             # Set appropriate permissions for .env file to be read by Docker.
-            chmod 644 $GITHUB_WORKSPACE/.env
+            chmod 644 .env
             # Stop and remove the running container, if any.
             docker stop ods || true
             docker rm ods || true
             # Run the Docker container with the .env file mounted inside.
-            docker run -d --name ods -p 8080:8080 --privileged -v $GITHUB_WORKSPACE/.env:/app/.env ${{ secrets.DOCKER_USERNAME }}/ods:latest
-  
+            docker run -d --name ods -p 8080:8080 --privileged -v $PWD/.env:/.env ${{ secrets.DOCKER_USERNAME }}/ods:latest
+         
