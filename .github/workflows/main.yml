@@ -68,6 +68,6 @@ jobs:
             docker stop ods || true
             docker rm ods || true
             # Run the Docker container with the .env file mounted inside.
-            docker run -d --name ods -p 8080:8080 --privileged -v $GITHUB_WORKSPACE/.env:/app/.env your_docker_username/ods:latest
+            docker run -d --name ods -p 8080:8080 --privileged -v $GITHUB_WORKSPACE/.env:/app/.env ${{ secrets.DOCKER_USERNAME }}/ods:latest
   
   
