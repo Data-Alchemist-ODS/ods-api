@@ -26,5 +26,5 @@ User.http
 # Go workspace file
 go.work
 
-# Environment variables file
+# Environment variables files
 .env
