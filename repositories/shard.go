@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"hash/fnv"
 
@@ -50,9 +49,25 @@ func GetFileContentType(filename string) string {
 }
 
 func readJSON(filename string, c *fiber.Ctx) [][]string {
-	f := filename
+	file, err := c.FormFile(filename)
+	if err != nil {
+		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "error when opening file",
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
+		})
+	}
 
-	content, err := ioutil.ReadFile(f)
+	f, err := file.Open()
+	if err != nil {
+		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "error when opening file",
+			"status": fiber.StatusInternalServerError,
+			"error": err.Error(),
+		})
+	}
+
+	content, err := ioutil.ReadAll(f)
 	if err != nil {
 		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to read file",
@@ -99,7 +114,16 @@ func readJSON(filename string, c *fiber.Ctx) [][]string {
 // Read data from CSV file
 func readCSV(filename string, c *fiber.Ctx) [][]string {
 	// Open the file
-	f, err := os.Open(filename)
+	file, err := c.FormFile(filename)
+	if err != nil {
+		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to open file",
+			"status":  fiber.StatusInternalServerError,
+			"error": err.Error(),
+		})
+	}
+
+	f, err := file.Open()
 	if err != nil {
 		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to open file",

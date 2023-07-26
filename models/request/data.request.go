@@ -1,5 +1,3 @@
 package request 
 
-type Data struct {
-	Fields map[string]string 
-}
+type Data map[string]string 

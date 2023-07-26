@@ -10,5 +10,10 @@ type Transaction struct {
 	PartitionType string             `json:"partition_type"`
 	ShardingKey   string             `json:"sharding_key"`
 	Database      string             `json:"database"`
-	Data          string             `json:"data"`
+	Data          FileData            `json:"data"`
+}
+
+
+type FileData struct {
+	FileName string `json:"fileName"`
 }

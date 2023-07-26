@@ -1,23 +1,18 @@
 package modules
 
 import (
-	//default modules
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"io"
 	"io/ioutil"
-	"os"
-	"strconv"
+	"fmt"
 
-	//fiber modules
 	"github.com/gofiber/fiber/v2"
-
-	//mongoDB modules
 	"go.mongodb.org/mongo-driver/bson"
 
-	//local modules
 	"github.com/Data-Alchemist-ODS/ods-api/database"
-	"github.com/Data-Alchemist-ODS/ods-api/repositories"
+	"github.com/Data-Alchemist-ODS/ods-api/models/request"
 )
 
 // function to store data in data collection mongoDB
@@ -25,84 +20,69 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 
 	coll := database.GetCollection(database.GetDB(), "Data")
 
-	contentType := repositories.GetFileContentType(filename)
+    file, err := c.FormFile(filename)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "message": "error when opening file using form file",
+            "status":  fiber.StatusInternalServerError,
+            "error":   err.Error(),
+        })
+    }
+
+    content, err := file.Open()
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "message": "error when opening file",
+            "status":  fiber.StatusInternalServerError,
+            "error":   err.Error(),
+        })
+    }
+    defer content.Close() // Close the opened file instead of the *multipart.FileHeader
+
+	// Determine the file type based on its content type
+	contentType := file.Header.Get("Content-Type")
 
 	if contentType == "text/csv" {
-		file, err := os.Open(filename)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "error when opening file",
-				"status":  fiber.StatusInternalServerError,
-				"error":   err.Error(),
-			})
-		}
-		defer file.Close()
-
 		// Read the CSV file
-		reader := csv.NewReader(file)
-		data, err := reader.ReadAll()
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "error when reading CSV file",
-				"status":  fiber.StatusInternalServerError,
-				"error":   err.Error(),
-			})
-		}
+		reader := csv.NewReader(content)
+		var headers []string
+		var data []request.Data
 
-		headers := data[0]
-		documents := make([]map[string]interface{}, 0)
-
-		for i := 1; i < len(data); i++ {
-			row := data[i]
-			doc := make(map[string]interface{})
-			doc["fields"] = make(map[string]interface{}) // Add this line to create the "fields" map
-
-			for j := 0; j < len(headers); j++ {
-				fieldValue := row[j]
-				fieldType := GetFieldType(fieldValue)
-
-				switch fieldType {
-				case "string":
-					doc["fields"].(map[string]interface{})[headers[j]] = fieldValue
-				case "number":
-					numericValue, err := strconv.ParseFloat(fieldValue, 64)
-					if err != nil {
-						return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-							"message": "error when converting field value to number",
-							"status":  fiber.StatusInternalServerError,
-							"error":   err.Error(),
-						})
-					}
-					doc["fields"].(map[string]interface{})[headers[j]] = numericValue
-				case "boolean":
-					booleanValue, err := strconv.ParseBool(fieldValue)
-					if err != nil {
-						return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-							"message": "error when converting field value to boolean",
-							"status":  fiber.StatusInternalServerError,
-							"error":   err.Error(),
-						})
-					}
-					doc["fields"].(map[string]interface{})[headers[j]] = booleanValue
-				default:
-					doc["fields"].(map[string]interface{})[headers[j]] = fieldValue
-				}
+		for i := 0; ; i++ {
+			row, err := reader.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "error when reading CSV file",
+					"status":  fiber.StatusInternalServerError,
+					"error":   err.Error(),
+				})
 			}
 
-			documents = append(documents, doc)
+			if i == 0 {
+				headers = row
+				continue
+			}
+
+			child := make(request.Data)
+			for j, value := range row {
+				child[headers[j]] = value
+			}
+
+			data = append(data, child)
 		}
 
-		if _, err := coll.InsertOne(context.Background(), bson.M{"documents": documents}); err != nil {
+		if _, err := coll.InsertOne(context.Background(), bson.M{"documents": filename, "data": data}); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "error when inserting data to MongoDB",
 				"status":  fiber.StatusInternalServerError,
 				"error":   err.Error(),
 			})
 		}
-	}
-
-	if contentType == "application/json" {
-		fileContent, err := ioutil.ReadFile(filename)
+	} else if contentType == "application/json" {
+		fileContent, err := ioutil.ReadAll(content)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "error when reading file",
@@ -111,9 +91,9 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 			})
 		}
 
-		var jsonData []map[string]interface{}
+		var data []request.Data
 
-		err = json.Unmarshal(fileContent, &jsonData)
+		err = json.Unmarshal(fileContent, &data)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "error when unmarshaling JSON",
@@ -122,52 +102,23 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 			})
 		}
 
-		// Convert JSON data to the desired structure
-		documents := make([]map[string]interface{}, len(jsonData))
-		for i, doc := range jsonData {
-			fields := make(map[string]interface{})
-			for key, value := range doc {
-				fields[key] = value
-			}
-			documents[i] = map[string]interface{}{
-				"fields": fields,
-			}
-		}
-
-		if _, err := coll.InsertOne(context.Background(), bson.M{"documents": documents}); err != nil {
+		if _, err := coll.InsertOne(context.Background(), bson.M{"documents": filename, "data": data}); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "error when inserting data to MongoDB",
 				"status":  fiber.StatusInternalServerError,
 				"error":   err.Error(),
 			})
 		}
-
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"message": "JSON file inserted successfully",
-			"status":  fiber.StatusOK,
+	} else {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "file type not supported",
+			"status":  fiber.StatusBadRequest,
+			"error":   "file must be .csv or .json",
 		})
 	}
 
-	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-		"message": "error when reading file",
-		"status":  fiber.StatusBadRequest,
-		"error":   "file type not supported",
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "File inserted successfully",
+		"status":  fiber.StatusOK,
 	})
-}
-
-func GetFieldType(value string) string {
-	// Try parsing as boolean
-	_, err := strconv.ParseBool(value)
-	if err == nil {
-		return "boolean"
-	}
-
-	// Try parsing as number
-	_, err = strconv.ParseFloat(value, 64)
-	if err == nil {
-		return "number"
-	}
-
-	// Default to string if not a boolean or number
-	return "string"
 }
