@@ -65,13 +65,10 @@ jobs:
             # Set appropriate permissions for .env file to be read by Docker.
             chmod 644 .env
   
-            # Copy the .env file to the Docker container
-            docker cp .env ods:/.env
-  
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_ACCESS_TOKEN }}
             docker pull ${{ secrets.DOCKER_USERNAME }}/ods:latest
             docker stop ods || true
             docker rm ods || true
-            docker run -d --name ods -p 8080:8080 --privileged --env-file .env ${{ secrets.DOCKER_USERNAME }}/ods:latest
-        
+            # Mount the .env file directly into the container using the -v flag.
+            docker run -d --name ods -p 8080:8080 --privileged -v $PWD/.env:/.env ${{ secrets.DOCKER_USERNAME }}/ods:latest
         
