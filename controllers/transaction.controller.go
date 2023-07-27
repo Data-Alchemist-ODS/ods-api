@@ -4,8 +4,6 @@ import (
 	//default modules
 	"context"
 	"fmt"
-	"log"
-	"strconv"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -140,11 +138,10 @@ func (controller *transactionController) GetAllStoredDatas(c *fiber.Ctx) error {
 	client := database.GetDB()
 	collection := database.GetCollection(client, "Data")
 
-	var dataDocuments []entity.DataDocument
+	var results []entity.Document
 
 	cursor, err := collection.Find(context.Background(), bson.M{})
 	if err != nil {
-		log.Fatal(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to get data",
 			"status":  fiber.StatusInternalServerError,
@@ -152,41 +149,18 @@ func (controller *transactionController) GetAllStoredDatas(c *fiber.Ctx) error {
 		})
 	}
 
-	err = cursor.All(context.Background(), &dataDocuments)
+	err = cursor.All(context.Background(), &results)
 	if err != nil {
-		log.Fatal(err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to decode data",
 			"status":  fiber.StatusInternalServerError,
 			"error":   err.Error(),
 		})
 	}
-
-	var dataResponse []entity.DataResponse
-
-	for _, doc := range dataDocuments {
-		for _, data := range doc.Documents {
-
-			fields := make(map[string]string)
-			for key, value := range data.Fields {
-				if strValue, ok := value.(string); ok {
-					fields[key] = strValue
-				} else if numValue, ok := value.(float64); ok {
-					fields[key] = strconv.FormatFloat(numValue, 'f', -1, 64)
-				}
-			}
-
-			dataResponse = append(dataResponse, entity.DataResponse{
-				ID:     doc.ID.Hex(),
-				Fields: fields,
-			})
-		}
-	}
-
 	return c.JSON(fiber.Map{
 		"message": "success get all data",
 		"status":  fiber.StatusOK,
-		"records": dataResponse,
+		"records": results,
 	})
 }
 
@@ -208,9 +182,8 @@ func (controller *transactionController) GetOneStoredData(c *fiber.Ctx) error {
 	client := database.GetDB()
 	collection := database.GetCollection(client, "Data")
 
-	var dataDocument entity.DataDocument
-
-	err = collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&dataDocument)
+	var results entity.Document
+	err = collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&results)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -218,40 +191,14 @@ func (controller *transactionController) GetOneStoredData(c *fiber.Ctx) error {
 				"status":  fiber.StatusNotFound,
 			})
 		}
-		log.Fatal(err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to get data",
-			"status":  fiber.StatusInternalServerError,
-			"error":   err.Error(),
-		})
 	}
-
-	var dataResponses []entity.DataResponse
-
-	for _, doc := range dataDocument.Documents {
-
-		fields := make(map[string]string)
-		for key, value := range doc.Fields {
-			if strValue, ok := value.(string); ok {
-				fields[key] = strValue
-			} else if numValue, ok := value.(float64); ok {
-				fields[key] = strconv.FormatFloat(numValue, 'f', -1, 64)
-			}
-		}
-
-		dataResponse := entity.DataResponse{
-			ID:     dataDocument.ID.Hex(),
-			Fields: fields,
-		}
-		dataResponses = append(dataResponses, dataResponse)
-	}
-
 	return c.JSON(fiber.Map{
 		"message": "Success get data by ID",
 		"status":  fiber.StatusOK,
-		"records": dataResponses,
+		"records": results,
 	})
 }
+
 
 // POST REQUEST CONTROLLER
 // POST Transaction create by user

@@ -4,16 +4,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type DataDocument struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	Documents []DataFields       `bson:"documents,omitempty"`
-}
+type Data map[string]interface{} 
 
-type DataFields struct {
-	Fields map[string]interface{} `bson:"fields,omitempty"`
-}
 
-type DataResponse struct {
-	ID     string            `json:"id"`
-	Fields map[string]string `json:"fields"`
+type Document struct {
+	ID		 primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Filename string				`json:"filename,omitempty" bson:"filename,omitempty"`
+	FileData []Data				`json:"data,omitempty" bson:"data,omitempty"`
 }
