@@ -220,7 +220,6 @@ func shardForHorizontal(records [][]string, shardKey string, numShards int) {
 }
 
 func HorizontalSharding(Data string, ShardKey string, Database []string, c *fiber.Ctx) error {
-	fmt.Println(len(Database))
 
 	file, err := c.FormFile(Data)
 
