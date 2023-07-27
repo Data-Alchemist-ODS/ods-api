@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"path/filepath"
 
 	//fiber modules
@@ -16,10 +17,14 @@ import (
 )
 
 // Data structure
-type Data struct {
-	// Flexible using map interface
-	Attributes map[string]interface{}
-}
+type (
+	Data struct {
+		// Flexible using map interface
+		Attributes map[string]interface{}
+	}
+
+	DataSharded map[int][]Data
+)
 
 func check_file_format(filename string) string {
 	contentType := GetFileContentType(filename)
@@ -61,8 +66,8 @@ func readJSON(filename string, c *fiber.Ctx) [][]string {
 	if err != nil {
 		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "error when opening file",
-			"status": fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"status":  fiber.StatusInternalServerError,
+			"error":   err.Error(),
 		})
 	}
 
@@ -71,7 +76,7 @@ func readJSON(filename string, c *fiber.Ctx) [][]string {
 		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to read file",
 			"status":  fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
 
@@ -81,7 +86,7 @@ func readJSON(filename string, c *fiber.Ctx) [][]string {
 		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to unmarshal json file",
 			"status":  fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
 
@@ -118,7 +123,7 @@ func readCSV(filename string, c *fiber.Ctx) [][]string {
 		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to open file",
 			"status":  fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
 
@@ -127,7 +132,7 @@ func readCSV(filename string, c *fiber.Ctx) [][]string {
 		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to open file",
 			"status":  fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
 
@@ -141,7 +146,7 @@ func readCSV(filename string, c *fiber.Ctx) [][]string {
 		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "failed to read csv file",
 			"status":  fiber.StatusInternalServerError,
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
 
@@ -190,7 +195,7 @@ func hashKey(shardKey string, numShards int) uint32 {
 }
 
 // Perform Horizontal Sharding
-func shardForHorizontal(records [][]string, shardKey string, numShards int) {
+func shardForHorizontal(records [][]string, shardKey string, numShards int) (result [][]Data) {
 	columns := records[0]
 	fmt.Println("step 11")
 	for _, rec := range records[1:] {
@@ -216,23 +221,28 @@ func shardForHorizontal(records [][]string, shardKey string, numShards int) {
 		shardIndex := hashKey(shardKey, numShards)
 
 		fmt.Printf("Database %d: %v\n", shardIndex, model.Attributes)
+		result[int(shardIndex)] = append(result[int(shardIndex)], model)
 	}
+
+	return result
 }
 
-func HorizontalSharding(Data string, ShardKey string, Database []string, c *fiber.Ctx) error {
+func HorizontalSharding(Data string, ShardKey string, Database []string, c *fiber.Ctx) ([][]Data, error) {
 
 	file, err := c.FormFile(Data)
 
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "failed to open file using form file",
-			"status":  fiber.StatusInternalServerError,
-			"error": err.Error(),
-		})
+		// return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 	"message": "failed to open file using form file",
+		// 	"status":  fiber.StatusInternalServerError,
+		// 	"error":   err.Error(),
+		// })
+		return nil, err
 	}
 
-
 	fileFormat := file.Header.Get("Content-Type")
+
+	fmt.Println("File Format:", fileFormat)
 
 	if fileFormat == "text/csv" {
 
@@ -241,23 +251,27 @@ func HorizontalSharding(Data string, ShardKey string, Database []string, c *fibe
 		key, err := takeKey(ShardKey, records, c)
 
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "failed to take shard key",
-				"status":  fiber.StatusBadRequest,
-				"error": err.Error(),
-			})
+			log.Default().Println("failed to take shard key:", err.Error())
+			// return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			// 	"message": "failed to take shard key",
+			// 	"status":  fiber.StatusBadRequest,
+			// 	"error":   err.Error(),
+			// })
+			return nil, err
 		}
-
 
 		databases := len(Database)
-		if databases < 2{
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "databases must be more than 1",
-				"status":  fiber.StatusBadRequest,
-			})
+		fmt.Println("databases:", databases)
+		if databases < 2 {
+			// log.Default().Println("databases must be more than 1:", err.Error())
+			// return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			// 	"message": "databases must be more than 1",
+			// 	"status":  fiber.StatusBadRequest,
+			// })
+			return nil, err
 		}
 
-		shardForHorizontal(records, key, databases)
+		return shardForHorizontal(records, key, databases), nil
 	}
 
 	if fileFormat == "application/json" {
@@ -265,30 +279,32 @@ func HorizontalSharding(Data string, ShardKey string, Database []string, c *fibe
 
 		key, err := takeKey(ShardKey, records, c)
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "failed to take shard key",
-				"status":  fiber.StatusBadRequest,
-				"error": err.Error(),
-			})
+			// return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			// 	"message": "failed to take shard key",
+			// 	"status":  fiber.StatusBadRequest,
+			// 	"error":   err.Error(),
+			// })
+			return nil, err
 		}
 
 		databases := len(Database)
-		if databases < 2{
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"message": "databases must be more than 1",
-				"status":  fiber.StatusBadRequest,
-			})
+		if databases < 2 {
+			// return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			// 	"message": "databases must be more than 1",
+			// 	"status":  fiber.StatusBadRequest,
+			// })
+			return nil, fmt.Errorf("databases must be more than 1")
 		}
 
-		shardForHorizontal(records, key, databases)
+		return shardForHorizontal(records, key, databases), nil
 	}
 
-	return c.JSON(fiber.Map{
-		"message": "shard is done",
-		"status": fiber.StatusOK,
-	})
-}		
-
+	// return c.JSON(fiber.Map{
+	// 	"message": "shard is done",
+	// 	"status":  fiber.StatusOK,
+	// })
+	return nil, fmt.Errorf("file format not supported")
+}
 
 // //THE LOGIC IS FALSE HERE!!!
 // // Vertical Sharding

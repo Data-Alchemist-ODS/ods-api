@@ -257,7 +257,7 @@ func (controller *transactionController) GetOneStoredData(c *fiber.Ctx) error {
 // POST Transaction create by user
 func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) error {
 	var request request.TransactionCreateRequest
-	
+
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "failed to parse json",
@@ -282,11 +282,19 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 	//Perform Sharding Using Local Modules In Repositories
 	if request.PartitionType == "Horizontal" {
 
-		method := repositories.HorizontalSharding("data", request.ShardingKey, request.Database, c)
-		fmt.Println(method)
+		method, err := repositories.HorizontalSharding("data", request.ShardingKey, request.Database, c)
+		fmt.Println("method:", method)
+
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "failed to perform sharding",
+				"status":  fiber.StatusInternalServerError,
+				"error":   err.Error(),
+			})
+		}
 
 		// Save the file data to MongoDB
-		err := modules.SaveToMongoDB("data", c)
+		err = modules.SaveToMongoDB("data", c)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"message": "failed to save data to MongoDB",
@@ -303,10 +311,10 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 				"error":   err.Error(),
 			})
 		}
-		
+
 		fileData := entity.FileData{
 			FileName: file.Filename,
-		}		
+		}
 
 		client := database.GetDB()
 		collection := database.GetCollection(client, "Transaction")
@@ -314,7 +322,7 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		transaction := entity.Transaction{
 			PartitionType: request.PartitionType,
 			ShardingKey:   request.ShardingKey,
-			Database:	   strings.Join(request.Database, ","),
+			Database:      strings.Join(request.Database, ","),
 			Data:          fileData,
 		}
 		transaction.ID = primitive.NewObjectID()

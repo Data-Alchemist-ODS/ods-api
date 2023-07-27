@@ -76,8 +76,7 @@ func (controller *databaseController) ConnectToTiDB(c *fiber.Ctx) error {
 	}
 
 	var dbName string
-	err = db.QueryRow("USE fortune500; SELECT * FROM `fortune500_2018_2022`").Scan(&dbName)
-	if err != nil {
+	if err = db.QueryRow("SELECT * FROM `fortune500_2018_2022`").Scan(&dbName); err != nil {
 		log.Fatal("failed to execute query", err)
 	}
 	fmt.Println(dbName)
