@@ -197,9 +197,9 @@ func hashKey(shardKey string, numShards int) uint32 {
 // Perform Horizontal Sharding
 func shardForHorizontal(records [][]string, shardKey string, numShards int) (result [][]Data) {
 	columns := records[0]
-	fmt.Println("step 11")
+
 	for _, rec := range records[1:] {
-		fmt.Println("step 12")
+
 		model := Data{
 			Attributes: make(map[string]interface{}),
 		}
