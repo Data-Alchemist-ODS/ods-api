@@ -199,7 +199,6 @@ func (controller *transactionController) GetOneStoredData(c *fiber.Ctx) error {
 	})
 }
 
-
 // POST REQUEST CONTROLLER
 // POST Transaction create by user
 func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) error {
@@ -230,7 +229,8 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 	if request.PartitionType == "Horizontal" {
 
 		method, err := repositories.HorizontalSharding("data", request.ShardingKey, request.Database, c)
-		fmt.Println("method:", method)
+
+		fmt.Println(len(method))
 
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

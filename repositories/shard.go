@@ -195,8 +195,11 @@ func hashKey(shardKey string, numShards int) uint32 {
 }
 
 // Perform Horizontal Sharding
-func shardForHorizontal(records [][]string, shardKey string, numShards int) (result [][]Data) {
+func shardForHorizontal(records [][]string, shardKey string, numShards int) [][]Data {
 	columns := records[0]
+
+	// create an array of [][]Data with length of numShards
+	result := make([][]Data, numShards)
 
 	for _, rec := range records[1:] {
 
