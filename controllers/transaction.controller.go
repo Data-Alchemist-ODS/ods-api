@@ -19,6 +19,7 @@ import (
 
 	//local modules
 	"github.com/Data-Alchemist-ODS/ods-api/database"
+	"github.com/Data-Alchemist-ODS/ods-api/helpers"
 	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
 	"github.com/Data-Alchemist-ODS/ods-api/modules"
@@ -231,6 +232,8 @@ func (controller *transactionController) CreateNewTransaction(c *fiber.Ctx) erro
 		method, err := repositories.HorizontalSharding("data", request.ShardingKey, request.Database, c)
 
 		fmt.Println(len(method))
+
+		helpers.SaveToTiDB(method[0], "gateway01.eu-central-1.prod.aws.tidbcloud.com", "4MXeBRmXXzc7uqt.root", "NLRxAVAVtAKY5SXu", "fortune500")
 
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
