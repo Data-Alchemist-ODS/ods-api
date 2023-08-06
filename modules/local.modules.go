@@ -1,15 +1,20 @@
 package modules
 
 import (
+	//default modules
 	"context"
 	"encoding/csv"
 	"encoding/json"
 	"io"
 	"io/ioutil"
 
+	//fiber modules
 	"github.com/gofiber/fiber/v2"
+
+	//mongo modules
 	"go.mongodb.org/mongo-driver/bson"
 
+	//local modules
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
 	"github.com/Data-Alchemist-ODS/ods-api/models/entity"

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-playground/validator/v10"
-
 	//fiber modules
 	"github.com/gofiber/fiber/v2"
 
@@ -24,6 +22,9 @@ import (
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
 	"github.com/Data-Alchemist-ODS/ods-api/modules"
 	"github.com/Data-Alchemist-ODS/ods-api/repositories"
+
+	//third party modules
+	"github.com/go-playground/validator/v10"
 )
 
 // validator is a variable that represent the validator module
@@ -59,7 +60,7 @@ func (controller *transactionController) GetAllTransactions(c *fiber.Ctx) error 
 	db := database.ConnectDB()
 	defer db.Disconnect(context.Background())
 
-	client := database.GetDB()                                  // Mengambil koneksi database dari package database
+	client := database.GetDB() // Mengambil koneksi database dari package database
 	collection := database.GetCollection(client, "Transaction") // Mendapatkan objek koleksi "Transaction"
 
 	var transactions []entity.Transaction

@@ -10,6 +10,7 @@ func RouteInit(r *fiber.App) {
 	databaseController := controllers.NewDatabaseController()
 	userController := controllers.NewUserController()
 	queryController := controllers.NewNaturalQueryController()
+	notesController := controllers.NewNotesController()
 
 	r.Get("/", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
@@ -17,6 +18,11 @@ func RouteInit(r *fiber.App) {
 			"status" : fiber.StatusOK,
 		})
 	})
+
+	//This is for notes
+	r.Post("/v1/api/gen-notes/create", notesController.CreateNewNotes)
+	r.Get("/v1/api/gen-notes", notesController.GetAllNotes)
+	// r.Delete("/v1/api/gen-notes/delete", notesController.DeleteNotes)
 
 	//This is for natural query that uses GPTAPI
 	r.Post("/v1/api/query", queryController.CreateNaturalQuery)
