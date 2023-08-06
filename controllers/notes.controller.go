@@ -18,6 +18,7 @@ import (
 	"github.com/Data-Alchemist-ODS/ods-api/database"
 	"github.com/Data-Alchemist-ODS/ods-api/models/entity"
 	"github.com/Data-Alchemist-ODS/ods-api/models/request"
+	"github.com/Data-Alchemist-ODS/ods-api/modules"
 
 	//third party modules
 	api "github.com/sashabaranov/go-openai"
@@ -90,8 +91,19 @@ func (controller *notesController) CreateNewNotes(c *fiber.Ctx) error {
         if len(lines) > 0 {
             dateAndDescription := lines[0]
             description := strings.Join(lines[1:], "\n")
+            
+            // Convert Indonesian date format to USA date format (month/day/year)
+            usaDate, err := modules.ConvertToUSADate(dateAndDescription)
+            if err != nil {
+                return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                    "message": "failed to convert date format",
+                    "status":  fiber.StatusInternalServerError,
+                    "error":   err.Error(),
+                })
+            }
+            
             processedNotes = append(processedNotes, entity.Notes{
-                Date:        dateAndDescription,
+                Date:        usaDate,
                 Description: description,
             })
         }
@@ -100,7 +112,7 @@ func (controller *notesController) CreateNewNotes(c *fiber.Ctx) error {
     client := api.NewClient(config.LoadAPIKey())
 
     for i, note := range processedNotes {
-        prompt := fmt.Sprintf("Input:\n%s\n\nGenerate an analyze based on the following description:", note.Description)
+        prompt := fmt.Sprintf("Input:\n%s\n\nGenerate an analysis based on the following description:", note.Description)
 
         resp, err := client.CreateChatCompletion(
             context.Background(),
@@ -109,7 +121,7 @@ func (controller *notesController) CreateNewNotes(c *fiber.Ctx) error {
                 Messages: []api.ChatCompletionMessage{
                     {
                         Role:    api.ChatMessageRoleSystem,
-                        Content: "You are a helpful assistant that analyze text based on note description.",
+                        Content: "You are a helpful assistant that generates an analyze based on note description.",
                     },
                     {
                         Role:    api.ChatMessageRoleUser,
@@ -132,7 +144,7 @@ func (controller *notesController) CreateNewNotes(c *fiber.Ctx) error {
     db := database.ConnectDB()
     defer db.Disconnect(context.Background())
 
-    collection := database.GetCollection(database.GetDB(), "Notes")
+    collection := database.GetCollection(db, "Notes")
 
     for _, note := range processedNotes {
         _, err := collection.InsertOne(context.Background(), note)

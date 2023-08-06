@@ -7,6 +7,10 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"time"
+	"errors"
+	"fmt"
+	"strings"
 
 	//fiber modules
 	"github.com/gofiber/fiber/v2"
@@ -130,4 +134,48 @@ func SaveToMongoDB(filename string, c *fiber.Ctx) error {
 		"message": "File inserted successfully",
 		"status":  fiber.StatusOK,
 	})
+}
+
+func ConvertToUSADate(indoDate string) (string, error) {
+    // Mapping of Indonesian months to English months
+    monthMap := map[string]string{
+        "Januari":   "January",
+        "Februari":  "February",
+        "Maret":     "March",
+        "April":     "April",
+        "Mei":       "May",
+        "Juni":      "June",
+        "Juli":      "July",
+        "Agustus":   "August",
+        "September": "September",
+        "Oktober":   "October",
+        "November":  "November",
+        "Desember":  "December",
+    }
+
+    // Split the input date and get the month and year
+    parts := strings.Fields(indoDate)
+    if len(parts) != 3 {
+        return "", errors.New("invalid date format")
+    }
+    day := parts[0]
+    month := parts[1]
+    year := parts[2]
+
+    // Convert the month to English using the mapping
+    englishMonth, found := monthMap[month]
+    if !found {
+        return "", errors.New("invalid month")
+    }
+
+    // Combine the parts and parse the date
+    englishDate := fmt.Sprintf("%s %s %s", day, englishMonth, year)
+    t, err := time.Parse("2 January 2006", englishDate)
+    if err != nil {
+        return "", err
+    }
+
+    // Format the time.Time in USA date format (month/day/year)
+    usaDate := t.Format("1/2/2006")
+    return usaDate, nil
 }
