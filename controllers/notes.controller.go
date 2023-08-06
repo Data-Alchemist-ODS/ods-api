@@ -100,7 +100,7 @@ func (controller *notesController) CreateNewNotes(c *fiber.Ctx) error {
     client := api.NewClient(config.LoadAPIKey())
 
     for i, note := range processedNotes {
-        prompt := fmt.Sprintf("Input:\n%s\n\nGenerate a story based on the following description:", note.Description)
+        prompt := fmt.Sprintf("Input:\n%s\n\nGenerate an analyze based on the following description:", note.Description)
 
         resp, err := client.CreateChatCompletion(
             context.Background(),
@@ -109,7 +109,7 @@ func (controller *notesController) CreateNewNotes(c *fiber.Ctx) error {
                 Messages: []api.ChatCompletionMessage{
                     {
                         Role:    api.ChatMessageRoleSystem,
-                        Content: "You are a helpful assistant that generates stories based on note description.",
+                        Content: "You are a helpful assistant that analyze text based on note description.",
                     },
                     {
                         Role:    api.ChatMessageRoleUser,
@@ -126,7 +126,7 @@ func (controller *notesController) CreateNewNotes(c *fiber.Ctx) error {
             })
         }
 
-        processedNotes[i].Story = resp.Choices[0].Message.Content
+        processedNotes[i].Analysis = resp.Choices[0].Message.Content
     }
 
     db := database.ConnectDB()

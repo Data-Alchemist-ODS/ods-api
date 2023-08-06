@@ -9,5 +9,5 @@ type Notes struct {
 	ID			primitive.ObjectID `gorm:"column:id;primaryKey" json:"NotesID" bson:"_id,omitempty"`
 	Date 		string 			   `json:"date"`
 	Description string 			   `json:"description"`
-	Story 		string 			   `json:"story"`
+	Analysis 	string 			   `json:"analysis"`
 }
