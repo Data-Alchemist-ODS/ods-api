@@ -19,14 +19,6 @@ func RouteInit(r *fiber.App) {
 		})
 	})
 
-	//This is for notes
-	r.Post("/v1/api/gen-notes/create", notesController.CreateNewNotes)
-	r.Get("/v1/api/gen-notes", notesController.GetAllNotes)
-	// r.Delete("/v1/api/gen-notes/delete", notesController.DeleteNotes)
-
-	//This is for natural query that uses GPTAPI
-	r.Post("/v1/api/query", queryController.CreateNaturalQuery)
-
 	//GET ROUTES
 	//User Routes
 	r.Get("/v1/api/user", userController.GetAllUser)
@@ -39,6 +31,9 @@ func RouteInit(r *fiber.App) {
 	r.Get("/v1/api/data", transactionController.GetAllStoredDatas)
 	r.Get("/v1/api/data/:id", transactionController.GetOneStoredData)
 
+	//Notes Routes
+	r.Get("/v1/api/gen-notes", notesController.GetAllNotes)
+
 	//POST ROUTES
 	//User Routes
 	r.Post("/v1/api/user/register", userController.RegisterUser)
@@ -47,6 +42,12 @@ func RouteInit(r *fiber.App) {
 	//Transaction Routes
 	r.Post("/v1/api/transaction", transactionController.CreateNewTransaction)
 	r.Post("/v1/api/connect/tidb", databaseController.ConnectToTiDB)
+
+	//Natural Query Routes
+	r.Post("/v1/api/query", queryController.CreateNaturalQuery)
+
+	//Notes Routes
+	r.Post("/v1/api/gen-notes/create", notesController.CreateNewNotes)
 
 	//PUT ROUTES
 	//User Routes
@@ -58,4 +59,7 @@ func RouteInit(r *fiber.App) {
 
 	//Transaction Routes
 	r.Delete("/v1/api/transaction/:id", transactionController.DeleteTransaction)
+
+	//Notes Routes
+	r.Delete("/v1/api/gen-notes/delete/:id", notesController.DeleteNotesHistory)
 }

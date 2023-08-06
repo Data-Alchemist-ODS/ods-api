@@ -11,6 +11,7 @@ import (
 
 	//mongoDB modules
 	"go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/bson/primitive"
 
 	//local modules
 	"github.com/Data-Alchemist-ODS/ods-api/config"
@@ -30,7 +31,7 @@ type NotesController interface {
 	CreateNewNotes(c *fiber.Ctx) error
 
 	//DELETE HANDLER
-	// DeleteNotes(c *fiber.Ctx) error
+	DeleteNotesHistory(c *fiber.Ctx) error
 }
 
 type notesController struct {}
@@ -148,5 +149,44 @@ func (controller *notesController) CreateNewNotes(c *fiber.Ctx) error {
         "message": "success inserting notes to database",
         "status":  fiber.StatusOK,
         "data":    processedNotes,
+    })
+}
+
+func (controller *notesController) DeleteNotesHistory(c *fiber.Ctx) error {
+    idParam := c.Params("id")
+    id, err := primitive.ObjectIDFromHex(idParam)
+    if err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "message": "failed to parse id",
+            "status":  fiber.StatusBadRequest,
+            "error":   err.Error(),
+        })
+    }
+
+    db := database.ConnectDB()
+    defer db.Disconnect(context.Background())
+
+    client := database.GetDB()
+    collection := database.GetCollection(client, "Notes")
+
+    result, err := collection.DeleteOne(context.Background(), bson.M{"_id": id})
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "message": "failed to delete notes",
+            "status":  fiber.StatusInternalServerError,
+            "error":   err.Error(),
+        })
+    }
+
+    if result.DeletedCount == 0 {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+            "message": "notes not found",
+            "status":  fiber.StatusNotFound,
+        })
+    }
+
+    return c.JSON(fiber.Map{
+        "message": "success deleting notes",
+        "status":  fiber.StatusOK,
     })
 }
