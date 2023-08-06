@@ -61,8 +61,12 @@ func SaveToTiDB(data []repositories.Data, serverName, user, password, database s
 
 	fmt.Println(resp.Choices[0].Message.Content)
 
-	_, err = db.Exec(resp.Choices[0].Message.Content)
+	_, err = db.Exec("DROP TABLE IF EXISTS shard")
+	if err != nil {
+		log.Fatal("failed to execute query", err)
+	}
 
+	_, err = db.Exec(resp.Choices[0].Message.Content)
 	if err != nil {
 		log.Fatal("failed to execute query", err)
 	}
